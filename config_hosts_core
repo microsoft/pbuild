@@ -1,0 +1,64 @@
+#
+# This rest of the file contains lines with three pieces of information per
+# line (space separated):
+#   Optional: "Host:" constant to specify that this is a host entry
+#   Key (name for referring to the entry)
+#   Host name (DNS name or IP address)
+#   Directory path on host
+#   Optional: Branch specification (to match with command line and/or default)
+
+# Old MAC hosts:
+#   10.4: scxcr-mac104-03
+#   10.5: scx-mac04
+#
+# Old Ubuntu hosts:
+#   scxcr-ub606-03
+#   scxcr64-ub606-03
+
+# Mainline
+host:	aix_5.3		scxaix3-1		~/dev		main
+host:	aix_6.1		scxaix1			~/dev		main
+host:	aix_7.1		scxomd-aix7-01		~/dev		main
+host:	hp_v2_ia64	scxrrhpv02		~/dev		main
+host:	hp_v2_risc	scxhpr3			~/dev		main
+host:	hp_v3_ia64	scxrrhpv01		~/dev		main
+host:	hp_v3_risc	scxrrhpr11		~/dev		main
+host:	redhat_4_32	scxcrd-rhe40-01		~/dev		main
+host:	redhat_4_64	scxcrd64-rhe40-4	~/dev		main
+host:	redhat_5_32	scxcrd-rhel50-02	~/dev		main
+host:	redhat_5_64	scxcrd64-rhe50-4	~/dev		main	# miroman
+host:	redhat_6_32	scxcrd-rhel6-01		~/dev		main
+host:	redhat_6_64	scxcrd64-rhel6-01	~/dev		main	# zoyang
+host:	sun_5.8_sparc	scxnetra01		~/dev		main
+host:	sun_5.9_sparc	scxsun14		~/dev		main
+host:	sun_5.10_sparc	scxsun12		~/dev		main
+host:	sun_5.10_x86	scxcrd-sol10-01		~/dev		main	# jeffcof
+host:	suse_09_32	scxsles9-03b		~/dev		main
+host:	suse_10_32	scxcrd-sle10-03		~/dev/b		main	# jeffcof
+host:	suse_10_64	scxcrd64-sle10-1	~/dev		main
+host:	suse_11_32	scxcr-sles11-03		~/dev		main
+host:	suse_11_64	scxcr64-sle11-05	~/dev		main	# gacheng
+
+# v1-branch
+host:	aix_5.3		scxaix3-1		~/dev-v1	v1
+host:	aix_6.1		scxaix1			~/dev-v1	v1
+host:	aix_7.1		scxomd-aix7-01		~/dev-v1	v1
+host:	hp_v2_ia64	scxrrhpv02		~/dev-v1	v1
+host:	hp_v2_risc	scxhpr3			~/dev-v1	v1
+host:	hp_v3_ia64	scxrrhpv01		~/dev-v1	v1
+host:	hp_v3_risc	scxrrhpr11		~/dev-v1	v1
+host:	redhat_4_32	scxcrd-rhe40-01		~/dev-v1	v1
+host:	redhat_4_64	scxcrd64-rhe40-4	~/dev-v1	v1
+host:	redhat_5_32	scxcrd-rhel50-02	~/dev-v1	v1
+host:	redhat_5_64	scxcrd64-rhe50-4	~/dev-v1	v1
+host:	redhat_6_32	scxcrd-rhel6-01		~/dev-v1	v1
+host:	redhat_6_64	scxcrd64-rhel6-01	~/dev-v1	v1
+host:	sun_5.8_sparc	scxnetra01		~/dev-v1	v1
+host:	sun_5.9_sparc	scxsun14		~/dev-v1	v1
+host:	sun_5.10_sparc	scxsun12		~/dev-v1	v1
+host:	sun_5.10_x86	scxcrd-sol10-01		~/dev-v1	v1
+host:	suse_09_32	scxsles9-03b		~/dev-v1	v1
+host:	suse_10_32	scxcrd-sle10-03		~/dev/b-v1	v1
+host:	suse_10_64	scxcrd64-sle10-1	~/dev-v1	v1
+host:	suse_11_32	scxcr-sles11-03		~/dev-v1	v1
+host:	suse_11_64	scxcr64-sle11-05	~/dev-v1	v1
