@@ -18,18 +18,6 @@
 # Be certain to create the logfile directory prior to running pbuild
 
 #
-# Default cache settings if unspecified on command line
-#
-# How is this different from initial-cache, you may ask?
-# If "cache" is set, then we'll do a "make cache" on every single build.
-# The "initial-cache" setting will only do a "make cache" once in a sandbox.
-#
-# With no customization, you get:  ""  (cache settings unchanged)
-#
-# You can customize with a line like the following:
-# cache: debug
-
-#
 # Default branch to build if unspecified on command line.
 # With no customization, you get:  ""  (no branch).
 #
@@ -54,7 +42,7 @@ branch: main
 #
 # Settings that may be customized:
 # With no cusomization, you get:
-#   "DeleteLogfiles,NoDiagnoseErrors,NoLogfileBranch,NoLogfileRename,Progress,SummaryScreen,TFProxStart"
+#   "CheckValidity,Debug,DeleteLogfiles,NoDiagnoseErrors,NoLogfileBranch,NoLogfileRename,Progress,SummaryScreen,TFProxStart"
 #
 # You can customize with a line like the following:
 #

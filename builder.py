@@ -8,6 +8,7 @@ import copy
 import curses
 import curses.wrapper
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -23,20 +24,20 @@ from config import MachineItem
 class BuildHost(threading.Thread):
     ##
     # Ctor
-    # \param[in] Tag (to uniquely identify this host entry)
+    # \param[in] Key to machines hash (to uniquely identify this host entry)
     # \param[in] Configuration class (for pbuild configuration)
-    # \param[in] Generic list of commands to execute on host
-    def __init__(self, tag, config):
+    def __init__(self, machineKey, config):
         threading.Thread.__init__(self)
         self.display_line = 0
         self.finished = False
 
-        self.tag = tag
         self.config = config
 
-        self.hostname = config.machines[tag].GetHost()
-        self.path = config.machines[tag].GetPath()
-        self.project = config.machines[tag].GetProject()
+        self.tag = config.machines[machineKey].GetTag()
+        self.hostname = config.machines[machineKey].GetHost()
+
+        self.path = config.machines[machineKey].GetPath()
+        self.project = config.machines[machineKey].GetProject()
         self.logPrefix = config.GetLogfilePrefix()
         self.deleteLogfiles = config.GetSetting('DeleteLogfiles')
         self.diagnoseErrors = config.GetSetting('DiagnoseErrors')
@@ -128,8 +129,10 @@ class BuildHost(threading.Thread):
         #
         # Note: It may be started via inetd.  If so, then it should be in the /etc/services file.
         # If not in /etc/services file, then just try and start (harmless if already running).
+        #
+        # (If using container file, it's assumed we're not using Teamprise)
 
-        if self.config.GetSetting('TFProxStart'):
+        if self.config.GetSetting('TFProxStart') and not self.config.options.container:
             queue.append('echo')
             queue.append('echo ========================= Performing starting TFProxy')
             queue.append('cat /etc/services | grep tfprox | grep 8080 || sudo /opt/tfprox/bin/tfprox -b')
@@ -138,7 +141,10 @@ class BuildHost(threading.Thread):
     ##
     # Build queue of operations to clean up writable files on destination
     #
-    def BuildQueueCleanup(self, paths, queue, cleanList):
+    # Note: "paths" should generally NOT be a list with new project-based clean mechanism
+    #       (although, technically, it will work)
+    #
+    def BuildQueueCleanup(self, queue, paths, cleanList):
         queue.append('')
         queue.append('echo')
         queue.append('echo ========================= Performing tf undo / cleanup')
@@ -153,17 +159,55 @@ class BuildHost(threading.Thread):
         queue.append('echo')
 
     ##
+    # Clean methods for specific projects (assumed that we're at base of enlistment for build project)
+    #
+    def BuildQueueCleanup_OMI(self, queue):
+        # There's a LOT of directories to avoid output dirs.  We assume that 'make cleandist'
+        # is complete (thus no cleanList for this project)
+        cleanPaths = [ "../omi" ]
+        cleanList = [ ]
+        self.BuildQueueCleanup(queue, cleanPaths, cleanList)
+
+    def BuildQueueCleanup_PAL(self, queue):
+        cleanPaths = [ "../pal" ]
+        cleanList = [ "installer", "source", "test" ]
+        self.BuildQueueCleanup(queue, cleanPaths, cleanList)
+
+    def BuildQueueCleanup_CM(self, queue):
+        self.BuildQueueCleanup_OMI(queue)
+        self.BuildQueueCleanup_PAL(queue)
+
+        cleanPaths = [ ".." ]
+        cleanList = [ "build", "opensource", "Unix/opensource", "Unix/src", "Unix/shared", "Unix/tools" ]
+        self.BuildQueueCleanup(queue, cleanPaths, cleanList)
+
+    def BuildQueueCleanup_OM(self, queue):
+        self.BuildQueueCleanup_OMI(queue)
+        self.BuildQueueCleanup_PAL(queue)
+
+        cleanPaths = [ "." ]
+        cleanList = [ "docs", "installer", "source", "test", "tools" ]
+        self.BuildQueueCleanup(queue, cleanPaths, cleanList)
+
+    def BuildQueueCleanup_VMM(self, queue):
+        self.BuildQueueCleanup_PAL(queue)
+
+        cleanPaths = [ "." ]
+        cleanList = [ "src" ]
+        self.BuildQueueCleanup(queue, cleanPaths, cleanList)
+
+    ##
     # Build queue of operations to perform on the remote systems
     #
     def BuildQueue(self, queue):
-        if self.project == '' or self.project == 'om':
+        if self.project == 'om':
             self.BuildQueue_OM(queue)
         elif self.project == 'cm':
             self.BuildQueue_CM(queue)
         elif self.project == 'vmm':
             self.BuildQueue_VMM(queue)
-        elif self.project == 'omi':
-            self.BuildQueue_OMI(queue)
+        elif self.project == 'nip':
+            self.BuildQueue_NIP(queue)
         else:
             raise NotImplementedError
 
@@ -172,8 +216,7 @@ class BuildHost(threading.Thread):
     #
     def BuildQueue_OM(self, queue):
         self.BuildQueueInitialize(queue)
-        cleanList = [ "docs", "installer", "sdk", "source", "test", "tools" ]
-        cleanPaths = [ "..", "../../omi", "../../scxpal" ]
+        self.BuildQueueCleanup_OM(queue)
 
         # Support handling if initial 'tf get' was not done
         #
@@ -198,9 +241,8 @@ class BuildHost(threading.Thread):
         queue.append('  echo "Error: \'build\' subdirectory does not exist!"')
         queue.append('  exit -1')
         queue.append('fi')
+        queue.append('BASE_DIRECTORY=`pwd -P`')
         queue.append('cd build || exit $?')
-
-        self.BuildQueueCleanup(cleanPaths, queue, cleanList)
 
         queue.append('')
         queue.append('echo')
@@ -243,46 +285,24 @@ class BuildHost(threading.Thread):
         queue.append('make distclean')
         queue.append('echo')
 
-        # We handle cache settings like this:
-        #
-        # . If no self.config.cacheSetting, use release
-        # . Otherwise, use self.config.cacheSetting
-
         queue.append('')
         queue.append('echo')
         queue.append('echo ========================= Performing Determining debug/release')
         queue.append('date')
 
-        if self.config.cacheSetting.strip():
-            queue.append('CACHE_SETTING="%s"' % self.config.cacheSetting)
-            queue.append('echo')
-
-        queue.append('DEBUG=0')
-        queue.append('for i in $CACHE_SETTING; do')
-        queue.append('    echo $i | grep "BUILD_TYPE=Debug" > /dev/null && DEBUG=1')
-        queue.append('    echo $i | grep "BUILD_TYPE=Release" > /dev/null && DEBUG=0')
-        queue.append('done')
-        queue.append('')
-        queue.append('if [ $DEBUG -eq 0 ]; then')
-        queue.append('    echo "Performing RELEASE build"')
-        queue.append('    ./configure')
-        queue.append('    EXITSTATUS=$?')
-        queue.append('else')
-        queue.append('    echo "Performing DEBUG build"')
-        queue.append('    ./configure --enable-debug')
-        queue.append('    EXITSTATUS=$?')
-        queue.append('fi')
-        queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
-        # HACK - until OpenPegasus goes away and OMI comes in
-        queue.append('make cache BUILD_PEGASUS=true')
+        if not self.config.options.debug:
+            queue.append('echo "Performing RELEASE build"')
+            queue.append('./configure')
+            queue.append('EXITSTATUS=$?')
+        else:
+            queue.append('echo "Performing DEBUG build"')
+            queue.append('./configure --enable-debug')
+            queue.append('EXITSTATUS=$?')
         queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
 
-        if self.config.options.full or len(self.config.options.target) != 0:
+        if len(self.config.options.target) != 0:
             # Our target is?
-            target = "testrun"
-
-            if self.config.options.full and self.config.options.target == "target_default":
-                target = "all testrun"
+            target = "all testrun"
             if self.config.options.target != "target_default":
                 target = self.config.options.target
 
@@ -308,20 +328,17 @@ class BuildHost(threading.Thread):
         if not self.config.options.nocleanup and self.config.options.shelveset:
             queue.append('')
             queue.append('if [ $EXITSTATUS = 0 ]; then')
-            self.BuildQueueCleanup(cleanPaths, queue, cleanList)
+            queue.append('cd $BASE_DIRECTORY')
+            self.BuildQueueCleanup_OM(queue)
             queue.append('fi')
             queue.append('')
-
-        queue.append('echo ========================= Performing Finishing up\; status=$EXITSTATUS')
-        queue.append('exit $EXITSTATUS')
 
     ##
     # Build queue of operations to perform on the remote systems (for CM)
     #
     def BuildQueue_CM(self, queue):
         self.BuildQueueInitialize(queue)
-        cleanList = [ "build", "opensource", "Unix/opensource", "Unix/src", "Unix/shared", "Unix/tools" ]
-        cleanPaths = [ "..", "../../omi", "../../scxpal" ]
+        self.BuildQueueCleanup_CM(queue)
 
         # Support handling if initial 'tf get' was not done
         #
@@ -346,15 +363,16 @@ class BuildHost(threading.Thread):
         queue.append('  echo "Error: \'build\' subdirectory does not exist!"')
         queue.append('  exit -1')
         queue.append('fi')
+        queue.append('BASE_DIRECTORY=`pwd -P`')
         queue.append('cd Unix || exit $?')
-
-        self.BuildQueueCleanup(cleanPaths, queue, cleanList)
 
         queue.append('')
         queue.append('echo')
         queue.append('echo ========================= Performing make distclean')
         queue.append('date')
+        queue.append('chmod ug+x ./configure; ./configure')
         queue.append('make distclean')
+        queue.append('echo')
 
         queue.append('')
         queue.append('if [ ${NEEDS_TFGET} -ne 0 ]; then')
@@ -380,35 +398,19 @@ class BuildHost(threading.Thread):
                 queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
             queue.append('echo')
 
-        # We handle cache settings like this:
-        #
-        # . If no self.config.cacheSetting, use release
-        # . Otherwise, use self.config.cacheSetting
-
         queue.append('')
         queue.append('echo')
         queue.append('echo ========================= Performing Determining debug/release')
         queue.append('date')
 
-        if self.config.cacheSetting.strip():
-            queue.append('CACHE_SETTING="%s"' % self.config.cacheSetting)
-            queue.append('echo')
-
-        queue.append('DEBUG=0')
-        queue.append('for i in $CACHE_SETTING; do')
-        queue.append('    echo $i | grep "BUILD_TYPE=Debug" > /dev/null && DEBUG=1')
-        queue.append('    echo $i | grep "BUILD_TYPE=Release" > /dev/null && DEBUG=0')
-        queue.append('done')
-        queue.append('')
-        queue.append('if [ $DEBUG -eq 0 ]; then')
-        queue.append('    echo "Performing RELEASE build"')
-        queue.append('    ./configure')
-        queue.append('    EXITSTATUS=$?')
-        queue.append('else')
-        queue.append('    echo "Performing DEBUG build"')
-        queue.append('    ./configure --enable-debug')
-        queue.append('    EXITSTATUS=$?')
-        queue.append('fi')
+        if not self.config.options.debug:
+            queue.append('echo "Performing RELEASE build"')
+            queue.append('./configure')
+            queue.append('EXITSTATUS=$?')
+        else:
+            queue.append('echo "Performing DEBUG build"')
+            queue.append('./configure --enable-debug')
+            queue.append('EXITSTATUS=$?')
         queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
 
         queue.append('')
@@ -420,10 +422,7 @@ class BuildHost(threading.Thread):
 
         if len(self.config.options.target) != 0:
             # Our target is?
-            target = "all test"
-
-            if self.config.options.full and self.config.options.target == "target_default":
-                target = "all test release"
+            target = "all release test"
             if self.config.options.target != "target_default":
                 target = self.config.options.target
 
@@ -453,117 +452,17 @@ class BuildHost(threading.Thread):
         if not self.config.options.nocleanup and self.config.options.shelveset:
             queue.append('')
             queue.append('if [ $EXITSTATUS = 0 ]; then')
-            self.BuildQueueCleanup(cleanPaths, queue, cleanList)
+            queue.append('cd $BASE_DIRECTORY')
+            self.BuildQueueCleanup_CM(queue)
             queue.append('fi')
             queue.append('')
-
-        queue.append('echo ========================= Performing Finishing up\; status=$EXITSTATUS')
-        queue.append('exit $EXITSTATUS')
-
-    ##
-    # Build queue of operations to perform on the remote systems (for OMI)
-    #
-    def BuildQueue_OMI(self, queue):
-        self.BuildQueueInitialize(queue)
-        cleanList = [ "distro" ]
-        cleanPaths = [ ".." ]
-
-        # Now generate the remainder of the command script
-        queue.append('if [ ! -d distro ]; then')
-        queue.append('  echo "Error: \'distro\' subdirectory does not exist!"')
-        queue.append('  exit -1')
-        queue.append('fi')
-        queue.append('cd distro || exit $?')
-
-        self.BuildQueueCleanup(cleanPaths, queue, cleanList)
-
-        queue.append('')
-        queue.append('echo')
-        queue.append('echo ========================= Performing make clean')
-        queue.append('date')
-        queue.append('make clean')
-
-        queue.append('')
-        queue.append('echo')
-        queue.append('echo ========================= Performing tf get')
-        queue.append('date')
-        queue.append('tf get')
-        queue.append('EXITSTATUS=$?')
-        queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
-        queue.append('echo')
-
-        if self.config.options.shelveset:
-            shelvesetList = self.config.options.shelveset.split(',')
-            queue.append('')
-            queue.append('echo')
-            queue.append('echo ========================= Performing tf unshelve')
-            queue.append('date')
-            for shelveset in shelvesetList:
-                queue.append('echo \'Unshelving shelveset: %s\'' % shelveset)
-                queue.append('tf unshelve "%s"' % shelveset)
-                queue.append('EXITSTATUS=$?')
-                queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
-            queue.append('echo')
-
-        # We handle cache settings like this:
-        #
-        # . If no self.config.cacheSetting, use release
-        # . Otherwise, use self.config.cacheSetting
-
-        queue.append('')
-        queue.append('echo')
-        queue.append('echo ========================= Performing Determining debug/release')
-        queue.append('date')
-
-        if self.config.cacheSetting.strip():
-            queue.append('CACHE_SETTING="%s"' % self.config.cacheSetting)
-            queue.append('echo')
-
-        queue.append('DEBUG=0')
-        queue.append('for i in $CACHE_SETTING; do')
-        queue.append('    echo $i | grep "BUILD_TYPE=Debug" > /dev/null && DEBUG=1')
-        queue.append('    echo $i | grep "BUILD_TYPE=Release" > /dev/null && DEBUG=0')
-        queue.append('done')
-        queue.append('')
-        queue.append('if [ $DEBUG -eq 0 ]; then')
-        queue.append('    echo "Performing RELEASE build"')
-        queue.append('    ./configure')
-        queue.append('    EXITSTATUS=$?')
-        queue.append('else')
-        queue.append('    echo "Performing DEBUG build"')
-        queue.append('    ./configure --enable-debug')
-        queue.append('    EXITSTATUS=$?')
-        queue.append('fi')
-        queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
-
-        queue.append('')
-        queue.append('echo')
-        queue.append('echo ========================= Performing make bindist')
-        queue.append('date')
-        queue.append('make bindist')
-
-        queue.append('')
-        queue.append('echo')
-        queue.append('echo Ending at:  `date`')
-
-        # Only clean up if the make was successful and we unshelved something
-        if not self.config.options.nocleanup and self.config.options.shelveset:
-            queue.append('')
-            queue.append('if [ $EXITSTATUS = 0 ]; then')
-            self.BuildQueueCleanup(cleanPaths, queue, cleanList)
-            queue.append('fi')
-            queue.append('')
-
-        queue.append('echo ========================= Performing Finishing up\; status=$EXITSTATUS')
-        queue.append('exit $EXITSTATUS')
 
     ##
     # Build queue of operations to perform on the remote systems (for VMM)
     #
     def BuildQueue_VMM(self, queue):
         self.BuildQueueInitialize(queue)
-        cleanList = [ "opensource", "scripts", "shared", "src", "tools", "unittests" ]
-        cleanPaths = [ "..", "../../scxpal" ]
+        self.BuildQueueCleanup_VMM(queue)
 
         # Support handling if initial 'tf get' was not done
         #
@@ -588,15 +487,7 @@ class BuildHost(threading.Thread):
         queue.append('  echo "Error: \'src\' subdirectory does not exist!"')
         queue.append('  exit -1')
         queue.append('fi')
-        
-        # Have to cd into one of the top directories as the following line tries to find files
-        # in the parent directory.
-        queue.append('cd src || exit $?')
-
-        self.BuildQueueCleanup(cleanPaths, queue, cleanList)
-
-        # cd to the top directory, ~/vmm/ to perform the right commands
-        queue.append('cd .. || exit $?')
+        queue.append('BASE_DIRECTORY=`pwd -P`')
 
         queue.append('')
         queue.append('echo')
@@ -642,43 +533,19 @@ class BuildHost(threading.Thread):
                 queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
             queue.append('echo')
 
-        # We handle cache settings like this:
-        #
-        # . If no self.config.cacheSetting, use release
-        # . Otherwise, use self.config.cacheSetting
-
-        queue.append('')
-        queue.append('echo')
-        queue.append('echo ========================= Performing Determining debug/release')
-        queue.append('date')
-
-        if self.config.cacheSetting.strip():
-            queue.append('CACHE_SETTING="%s"' % self.config.cacheSetting)
-            queue.append('echo')
-
-        queue.append('DEBUG=0')
-        queue.append('for i in $CACHE_SETTING; do')
-        queue.append('    echo $i | grep "BUILD_TYPE=Debug" > /dev/null && DEBUG=1')
-        queue.append('    echo $i | grep "BUILD_TYPE=Release" > /dev/null && DEBUG=0')
-        queue.append('done')
-        queue.append('')
-        queue.append('if [ $DEBUG -eq 0 ]; then')
-        queue.append('    echo "Performing RELEASE build"')
-        queue.append('    ./configure')
-        queue.append('    EXITSTATUS=$?')
-        queue.append('else')
-        queue.append('    echo "Performing DEBUG build"')
-        queue.append('    ./configure --enable-debug')
-        queue.append('    EXITSTATUS=$?')
-        queue.append('fi')
+        if not self.config.options.debug:
+            queue.append('echo "Performing RELEASE build"')
+            queue.append('./configure')
+            queue.append('EXITSTATUS=$?')
+        else:
+            queue.append('echo "Performing DEBUG build"')
+            queue.append('./configure --enable-debug')
+            queue.append('EXITSTATUS=$?')
         queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
 
         if len(self.config.options.target) != 0:
             # Our target is?
-            target = "all test"
-
-            if self.config.options.full and self.config.options.target == "target_default":
-                target = "all test release"
+            target = "all test release"
             if self.config.options.target != "target_default":
                 target = self.config.options.target
 
@@ -701,12 +568,131 @@ class BuildHost(threading.Thread):
         if not self.config.options.nocleanup and self.config.options.shelveset:
             queue.append('')
             queue.append('if [ $EXITSTATUS = 0 ]; then')
-            self.BuildQueueCleanup(cleanPaths, queue, cleanList)
+            queue.append('cd $BASE_DIRECTORY')
+            self.BuildQueueCleanup_VMM(queue)
             queue.append('fi')
             queue.append('')
 
-        queue.append('echo ========================= Performing Finishing up\; status=$EXITSTATUS')
-        queue.append('exit $EXITSTATUS')
+    ##
+    # Build queue of operations to perform on the remote systems (for non-integrated builds)
+    #
+    def BuildQueue_NIP(self, queue):
+        self.BuildQueueInitialize(queue)
+
+        # Prior to writing the script, the script name is written to variable $SCRIPTNAME
+
+        queue.append('echo')
+        queue.append('echo ========================= Performing Starting NIP build')
+        queue.append('')
+        queue.append('# This script is a bundle file for PBUILD non-integrated projects.  In this')
+        queue.append('# model, the PBUILD-generated command script contains both commands to perform')
+        queue.append('# the build as well as the package itself to build.  It is the job of this')
+        queue.append('# script to separate the .tar container file from the command script, unpack')
+        queue.append('# the .tar container file, and perform the build.')
+        queue.append('')
+        queue.append('# Note: We can\'t use \'sed\' to strip the script from the binary package.')
+        queue.append('# That doesn\'t work on AIX 5, where \`sed\` did strip the binary package')
+        queue.append('# AND null bytes, created a corrupted stream.')
+        queue.append('')
+        queue.append('set +e')
+        queue.append('# set -x')
+        queue.append('')
+        queue.append('PATH=/usr/bin:/bin')
+        queue.append('umask 022')
+        queue.append('')
+        queue.append('# Can\'t use something like \'readlink -e $0\' because that doesn\'t work everywhere')
+        queue.append('# And HP doesn\'t define $PWD in a sudo environment, so we define our own')
+        queue.append('case $0 in')
+        queue.append('    /*|~*)')
+        queue.append('        SCRIPT_INDIRECT="`dirname $0`"')
+        queue.append('        ;;')
+        queue.append('    *)')
+        queue.append('        PWD="`pwd`"')
+        queue.append('        SCRIPT_INDIRECT="`dirname $PWD/$0`"')
+        queue.append('        ;;')
+        queue.append('esac')
+        queue.append('SCRIPT_DIR="`(cd \"$SCRIPT_INDIRECT\"; pwd -P)`"')
+        queue.append('SCRIPT="$SCRIPT_DIR/`basename $0`"')
+        queue.append('')
+        queue.append('# These symbols will get replaced during the bundle creation process.')
+        queue.append('#')
+        queue.append('')
+        queue.append('SCRIPT_LEN=<SCRIPT_LEN>')
+        queue.append('SCRIPT_LEN_PLUS_ONE=<SCRIPT_LEN+1>')
+        queue.append('')
+
+        queue.append('echo')
+        queue.append('echo ========================= Performing Clensing prior builds')
+        queue.append('rm -rf %s/*' % self.path)
+        queue.append('')
+
+        queue.append('echo')
+        queue.append('echo ========================= Performing Extracting binary payload')
+        queue.append('TAIL_CQUAL=""')
+        queue.append('[ `uname` != "SunOS" ] && TAIL_CQUAL="-n"')
+        queue.append('tail $TAIL_CQUAL +${SCRIPT_LEN_PLUS_ONE} "${SCRIPT}" | tar xf -')
+        queue.append('EXITSTATUS=$?')
+
+        if not self.diagnoseErrors:
+            queue.append('[ -n "${SCRIPTNAME}" ] && rm ${SCRIPTNAME}')
+
+        queue.append('if [ ${EXITSTATUS} -ne 0 ]')
+        queue.append('then')
+        queue.append('    echo "Failed: could not extract the install bundle."')
+        queue.append('    exit ${EXITSTATUS}')
+        queue.append('fi')
+        queue.append('echo "Binary payload has been extracted successfully ..."')
+
+        if len(self.config.options.target) != 0:
+            queue.append('echo')
+            queue.append('echo ========================= Performing Determining debug/release')
+            queue.append('date')
+
+            if not self.config.options.debug:
+                queue.append('echo "Performing RELEASE build"')
+                queue.append('./configure --dev')
+                queue.append('EXITSTATUS=$?')
+            else:
+                queue.append('echo "Performing DEBUG build"')
+                queue.append('./configure --dev --enable-debug')
+                queue.append('EXITSTATUS=$?')
+            queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
+
+            # Our target is?
+            target = "all tests"
+            if self.config.options.target != "target_default":
+                target = self.config.options.target
+
+            if not target.lower().startswith('none;'):
+                # Split our targets into a list
+                targets = target.split()
+
+                for target in targets:
+                    queue.append('')
+                    queue.append('echo')
+                    queue.append('echo \'========================= Performing make %s ' % target + '\'')
+                    queue.append('date')
+                    queue.append('make %s ' % target)
+                    queue.append('MAKE_STATUS=$?')
+                    queue.append('if [ $MAKE_STATUS -ne 0 ]; then')
+                    queue.append('    EXITSTATUS=$MAKE_STATUS')
+                    queue.append('    exit $EXITSTATUS')
+                    queue.append('fi')
+
+            else:
+                # We have a target like: "none;<something>" - treat "<something>" like a command
+                command = target.split(';', 1)[1]
+                queue.append('')
+                queue.append('echo')
+                queue.append('echo \'========================= Performing Command: %s ' % command + '\'')
+                queue.append('date')
+                queue.append('echo "Executing: %s"' % command)
+                queue.append(command)
+                queue.append('EXITSTATUS=$?')
+                queue.append('[ $EXITSTATUS -ne 0 ] && echo "Command execution failed!"')
+
+        queue.append('echo')
+        queue.append('echo Ending at:  `date`')
 
     ##
     # Perform a build on a remote system (execute the command script already copied).
@@ -744,7 +730,7 @@ class BuildHost(threading.Thread):
             outf = open(outfname, 'a+', 1)
 
             self.process = subprocess.Popen(
-                ['ssh', self.hostname, 'chmod 755 ' + self.destinationName + '; . ' + self.destinationName],
+                ['ssh', self.hostname, 'chmod 755 ' + self.destinationName + '; bash ' + self.destinationName],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT
@@ -770,7 +756,7 @@ class BuildHost(threading.Thread):
             outf = open(outfname, 'a+')
 
             self.process = subprocess.Popen(
-                ['ssh', self.hostname, 'chmod 755 ' + self.destinationName + '; . ' + self.destinationName],
+                ['ssh', self.hostname, 'chmod 755 ' + self.destinationName + '; bash ' + self.destinationName],
                 stdin=subprocess.PIPE,
                 stdout=outf,
                 stderr=outf
@@ -809,7 +795,7 @@ class BuildHost(threading.Thread):
         #self.queue.insert(0, 'echo \'-*- mode: compilation -*-\'')
 
         # In case of internal errors, leave temporary command script around
-        if not self.diagnoseErrors:
+        if not self.diagnoseErrors and not self.config.options.container:
             self.queue.insert(1, 'rm ' + self.destinationName)
         else:
             self.queue.insert(1, 'echo \'Executing script %s\'' % self.destinationName)
@@ -819,10 +805,36 @@ class BuildHost(threading.Thread):
         self.queue.insert(3, 'cd %s || exit $?' % self.path)
         self.queue.insert(4, '')
 
+        # We assume that $EXITSTATUS was previously set by project-specific queue code
+        self.queue.append('echo ========================= Performing Finishing up\; status=$EXITSTATUS')
+        self.queue.append('exit $EXITSTATUS')
+
+        # If we're a container file:
+        #   Leave a marker so primary script knows our own name ($SCRIPTNAME)
+        #   Do script length substitutions
+        if self.config.options.container:
+            self.queue.insert(2, 'SCRIPTNAME=\'%s\'' % self.destinationName)
+
+            # WARNING: DO NOT MODIFY LENGTH OF self.queue AFTER THIS POINT!
+
+            self.queue = [ line.replace('<SCRIPT_LEN>', str( len(self.queue)) )
+                           for line in self.queue ]
+            self.queue = [ line.replace('<SCRIPT_LEN+1>', str( len(self.queue)+1) )
+                           for line in self.queue ]
+
+        # Generate a temporary file with all of our commands
+
         tmpfile = tempfile.NamedTemporaryFile()
 
         for command in self.queue:
             tmpfile.write(command + '\n')
+
+        # Append our container file if we have one
+
+        if self.config.options.container:
+            containerFile = file(self.config.options.container, 'rb')
+            shutil.copyfileobj( containerFile, tmpfile )
+            containerFile.close()
 
         tmpfile.flush()
 
@@ -1163,19 +1175,21 @@ class Builder:
         # Build the host list:
         # Either the one specified at launch, or all of the machines in configuraiton
         hosts = []
-        if len(self.config.hostlist):
-            for entry in sorted(self.config.hostlist):
+        if len(self.config.machineKeys):
+            for entry in sorted(self.config.machineKeys):
                 hosts.append( BuildHost(entry, self.config) )
         else:
             for key in sorted(self.config.machines.keys()):
                 hosts.append( BuildHost(key, self.config) )
 
-        # Figure out where each host will display it's data
-        count = 1
+        # Figure out where each host will display it's data (sort by tag)
+        tags = []
+        for host in hosts:
+            tags.append( host.tag )
+        tags = sorted(tags)
 
         for host in hosts:
-            count = count + 1
-            host.display_line = count
+            host.display_line = tags.index(host.tag) + 2
 
         # Sanity check - each host should have a non-zero display line
         for host in hosts:

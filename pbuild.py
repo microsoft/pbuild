@@ -6,6 +6,8 @@
 
 from optparse import OptionParser
 import sys
+import os
+from stat import *
 
 from config import Configuration
 from config import MachineItem
@@ -44,24 +46,24 @@ class pbuild:
                           dest="branch",
                           help="Branch specification to build (only build hosts with this branch specification)")
 
-        parser.add_option("", "--cache",
-                          type="string",
-                          dest="cache",
-                          help="Specifies 'make cache' settings to be specified on the build host (if not specified, 'make cache' settings are unchanged on the destination host)")
+        parser.add_option("-d", "--debug",
+                          action="store_true", dest="debug", default=False,
+                          help="Build targets in DEBUG mode")
 
         parser.add_option("", "--command",
                           type="string",
                           dest="command",
                           help="Executes the specified command string rather than buiding/running a command script to perform a remote build")
 
+        parser.add_option("", "--container",
+                          type="string",
+                          dest="container",
+                          help="Name of container file (typically .tar file) for non-standard builds")
+
         parser.add_option("", "--exclude",
                           type="string",
                           dest="exclude",
                           help="Overrides default exclude list from configuration file (if any); comma-separated list of hosts to exclude from the build")
-
-        parser.add_option("-f", "--full",
-                          action="store_true", dest="full", default=False,
-                          help="Perform a full build (does --cache=NOUNIT --target='all testrun')")
 
         parser.add_option("", "--initialize",
                           action="store_true", dest="initialize", default=False,
@@ -84,6 +86,10 @@ class pbuild:
         parser.add_option("", "--nocleanup",
                           action="store_true", dest="nocleanup", default=False,
                           help="Skip the 'tf undo' cleanup at the end of a build")
+
+        parser.add_option("", "--nodebug",
+                          action="store_true", dest="nodebug", default=False,
+                          help="Build targets in NODEBUG mode")
 
         parser.add_option("", "--nocurses",
                           action="store_true", dest="nocurses", default=False,
@@ -114,19 +120,32 @@ class pbuild:
 
         # Basic error checking
 
-        if options.cache \
-                or options.full \
-                or options.nocleanup \
-                or options.shelveset:
-            # We're doing some kind of a build: Be sure there's no conflict with other qualifiers
-            if len(args) and options.list:
-                parser.error('Option --list conflicts with other specified options\n')
-
-            if options.command:
-                parser.error('Option --command conflicts with other specified options\n')
+        if len(args) and options.list:
+            parser.error('Option --list conflicts with other specified options\n')
 
         if options.list and options.command:
-                parser.error('Option --command conflicts with option --list\n')
+            parser.error('Option --command conflicts with option --list\n')
+
+        if options.debug and options.nodebug:
+            parser.error('Options --debug and --nodebug conflict with one another')
+
+        if options.container:
+            if options.command or options.nocleanup or options.shelveset or options.tests or options.test_attrs:
+                parser.error('Option --container conflicts with other specified options')
+
+            # Allow "~/" construct on the container file and validate that we can find it
+            options.container = options.container.replace('~', os.path.join(os.path.expanduser('~')))
+
+            # Verify that the container file actually exists
+            try:
+                containerStat = os.stat(options.container)
+            except OSError:
+                parser.error('Container file %s could not be found' % options.container)
+
+        elif options.debug or options.nodebug or options.nocleanup or options.shelveset:
+            # We're doing some kind of a build: Be sure there's no conflict with other qualifiers
+            if options.command:
+                parser.error('Option --command conflicts with other specified options\n')
 
         # Save command line arguments for later interpretation
         self.options = options
@@ -147,16 +166,18 @@ class pbuild:
         # Support for the --list qualifier
         if self.options.list:
             print "Logfile Directory:", config.GetLogfilePrefix()
-            if config.GetBranchSpecification() != '':
-                print "Branch:           ", config.GetBranchSpecification()
-            else:
-                print "Branch:            <None>"
+            print "Branch:           ", config.GetBranchSpecification()
             print "Settings:         ", config.currentSettings
             print "\n"
-            print "%-20s -10s %s" % ("Machine Tag", "Project", "Host Address")
-            print "%-20s -10s %s\n" % ("-----------", "-------", "------------")
+            print "%-20s %-10s %s" % ("Machine Tag", "Project", "Host Address")
+            print "%-20s %-10s %s\n" % ("-----------", "-------", "------------")
+
+            # We really prefer to list sorted by tags, so do so
+            machines_byTag = {}
             for key in sorted(config.machines.keys()):
-                print "%-20s %s" % (key + ':', config.machines[key].GetProject(), config.machines[key].GetHost())
+                machines_byTag[config.machines[key].GetTag()] = config.machines[key]
+            for key in sorted(machines_byTag.keys()):
+                print "%-20s %-10s %s" % (machines_byTag[key].GetTag() + ':', machines_byTag[key].GetProject(), machines_byTag[key].GetHost())
             return 0
 
         # Go start the build process (and return resulting status)

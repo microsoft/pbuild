@@ -22,10 +22,17 @@ class MachineItem:
     # \param[in] Host key
     # \param[in] Machine address
     # \param[in] Destination path
-    def __init__(self, host, path, project):
+    def __init__(self, tag, host, path, project):
+        self.tag = tag
         self.host = host
         self.path = path
         self.project = project
+
+    ##
+    # Return the tag name associated with an entry
+    #
+    def GetTag(self):
+        return self.tag
 
     ##
     # Return the host name associated with an entry
@@ -58,12 +65,11 @@ class Configuration:
         self.options = options
         self.args = args
 
-        self.hostlist = []
+        self.machineKeys = []
         self.machines = {}
         self.machines_allbranches = {}
         self.currentSettings = {}
         self.excludeList = []
-        self.cacheSetting = ''
         self.test_attr = ''
         self.test_list = ''
 
@@ -77,8 +83,8 @@ class Configuration:
         #   1. Configuration file
         #   2. Command line option
 
-        self.validSettings = [ 'deletelogfiles', 'diagnoseerrors', 'logfilebranch', 'logfilerename', 'progress', 'summaryscreen', 'tfproxstart' ]
-        self.ParseSettings('defaults', 'DeleteLogfiles,NoDiagnoseErrors,NoLogfileBranch,NoLogfileRename,Progress,SummaryScreen,TFProxStart')
+        self.validSettings = [ 'checkvalidity', 'debug', 'deletelogfiles', 'diagnoseerrors', 'logfilebranch', 'logfilerename', 'progress', 'summaryscreen', 'tfproxstart' ]
+        self.ParseSettings('defaults', 'CheckValidity,Debug,DeleteLogfiles,NoDiagnoseErrors,NoLogfileBranch,NoLogfileRename,Progress,SummaryScreen,TFProxStart')
 
         # Default location for PBUILD logfiles (include trailing "/" in path)
         self.logfilePrefix = os.path.join(os.path.expanduser('~'), '')
@@ -93,33 +99,6 @@ class Configuration:
 
         if len(self.configurationFilename) == 0:
             self.configurationFilename = os.path.join(os.path.expanduser('~'), '.pbuild')
-
-        # Data structure for parsing "cache" qualifier
-        #
-        # This is a list of valid cache types (with proper capitalization).
-        # Each entry represents a valid option for the "cache" qualifier.
-        #
-        # For each entry in the cache parse data structure:
-        # If the second entry is a tuple, the tuple represents valid options.
-        # If the second entry is a string, a simple substitution is performed.
-        #
-        # Entries with tuples are expected to be specified as: "key=value"
-        # Entries without tuples are expected to be specified as: "key" (no '=')
-
-        self.cacheParseData = (
-                ( "BUILD_TYPE",             ("Debug", "Release")),
-                ( "BUILD_PROFILING",        ("false", "prof",  "purify",  "gprof",  "quantify")),
-                ( "BUILD_PEGASUS",          ("true",  "false")),
-                ( "BUILD_PEGASUS_DEBUG",    ("true",  "false")),
-                ( "SCX_STACK_ONLY",         ("true",  "false")),
-
-                ( "RESET",        "BUILD_TYPE=Release BUILD_PROFILING=false BUILD_PEGASUS=true BUILD_PEGASUS_DEBUG=false UNITTESTS_SUBSET= " ),
-                ( "DEBUG",        "BUILD_TYPE=Debug BUILD_PEGASUS_DEBUG=true" ),
-                ( "RELEASE",      "BUILD_TYPE=Release BUILD_PEGASUS_DEBUG=false" ),
-                ( "NOUNITTESTS",  "UNITTESTS_SUBSET=" ),
-                ( "SCXONLY",      "BUILD_PEGASUS=false" ),
-                ( "ALL",          "BUILD_PEGASUS=true" )
-            )
 
     ##
     # Get the branch to build.  If empty, no branch specifications are allowed
@@ -177,85 +156,6 @@ class Configuration:
         return self.test_list
 
     ##
-    # Parse cache settings
-    #
-    # Cache settings can be space or comma delimited.  Each cache setting can
-    # be of the form "shortcut" or "key=value".  For ease of entry:
-    #   > Abbreviations are allowed as long as they're unique
-    #   > Case is not important
-    #
-    # When a matching entry is found, we substitute exactly since Makefiles do
-    # care about case and do not allow abbreviations.
-    # 
-    def ParseCacheSpec(self, cachestring):
-        cacheReturn = ''
-        cachelist = cachestring.replace(',', ' ').split()
-        for entry in cachelist:
-            # Strip off any '=' parameter, and do some basic validation
-            entrylist = entry.split('=')
-            if len(entrylist) == 2 and len(entrylist[0]) > 0 and len(entrylist[1]) > 0:
-                (key, value) = entrylist
-            elif len(entrylist) == 1 and len(entrylist[0]) > 0:
-                (key, value) = (entrylist[0], None)
-            else:
-                sys.stderr.write('Invalid cache setting: %s\n' % entry)
-                sys.exit(-1)
-
-            #
-            # Try to find a match in our valid cache parse list
-            #
-            matchKey = None
-            matchValue = None
-
-            for element in self.cacheParseData:
-                assert isinstance(element[1], tuple) or isinstance(element[1], str)
-                if len(entrylist) == 2 and isinstance(element[1], tuple):
-                    # Handle cache specifications like "key=value"
-
-                    # If this entry doesn't match user spec, move along
-                    if not element[0].lower().startswith(key.lower()):
-                        continue
-
-                    # Check for non-unique specification
-                    if matchKey:
-                        sys.stderr.write('Cache key \'%s\' is not unique\n' % key)
-                        sys.exit(-1)
-                    matchKey = element[0]
-
-                    # We have a match, so try to find matching value
-                    for valueEntry in element[1]:
-                        if valueEntry.lower().startswith(value.lower()):
-                            if matchValue:
-                                sys.stderr.write('Cache key \'%s\' has value \'%s\' that is not unique\n' % (key, value))
-                                sys.exit(-1)
-                            matchValue = valueEntry
-
-                    # Handle exact match as a special case (one key is substring of another)
-                    if element[0].lower() == key.lower():
-                        break
-
-                elif len(entrylist) == 1 and isinstance(element[1], str):
-                    # Handle cache specifications like "key"
-
-                    if element[0].lower().startswith(key.lower()):
-                        if matchKey or matchValue:
-                            sys.stderr.write('Cache key \'%s\' is not unique\n' % key)
-                            sys.exit(1)
-                        matchValue = element[1]
-
-            if matchKey and matchValue:
-                # Add a new setting like 'key=value'
-                cacheReturn = '%s%s=%s ' % (cacheReturn, matchKey, matchValue)
-            elif matchValue:
-                # Add a new setting (simple substitution)
-                cacheReturn = '%s%s ' % (cacheReturn, matchValue)
-            else:
-                sys.stderr.write('Unmatched cache setting: %s\n' % entry)
-                sys.exit(-1)
-
-        return cacheReturn
-
-    ##
     # Parse a settings string and set the appropriate settings
     #
     def ParseSettings(self, source, settings):
@@ -278,100 +178,88 @@ class Configuration:
     # Parse a host name entry from the configuration file
     #
     # Host entries can be of the following format:
-    #       tag  host  directory	           (does not allow projects or branches)
-    # host: tag  host  directory  branch           (does not allow projects - only OM)
-    # host: tag  host  directory  branch  project  (allows both branches and projects)
     #
-    def ParseHostEntry(self, elements, keylist, hostlist, keylist_global):
+    # host: tag  host  directory  branch  project
+    #
+    # Note: "host:" tag is removed before we're called.
+
+    def ParseHostEntry(self, elements, taglist, hostlist, taglist_global):
         line = elements.rstrip()
         elements = elements.rstrip().split()
-        project = ""
+        entryTag = ""
+        entryHost = ""
+        entryDirPath = ""
+        entryBranch = ""
+        entryProject = ""
 
         # Was both a branch and project specified on this host entry?
         if len(elements) == 5:
             if self.GetBranchSpecification() == '':
-                sys.stderr.write('Branches disabled with branch specification on host entry - offending line:\n'
+                sys.stderr.write('No branch specified - branch specification is required for host entry - offending line:\n'
                                  + '\'' + line.rstrip() + '\'\n')
                 sys.exit(-1)
 
-            project = elements[4].lower()
-            if project <> 'om' and project <> 'cm' and project <> 'nw' and project <> 'vmm' and project <> 'omi':
+            entryTag = elements[0].lower()
+            entryHost = elements[1]
+            entryDirPath = elements[2]
+            entryBranch = elements[3]
+            entryProject = elements[4].lower()
+
+            # Validate the project name - 'nip' is 'non-intregrated project', used for containers
+            if not self.VerifyProjectName(entryProject):
                 raise IOError('Bad project in configuration file - offending line: \'' + line.rstrip() + '\'')
 
             # No match for this branch?  Just skip the host entry ...
-            if elements[3].lower() != self.GetBranchSpecification():
+            if entryBranch.lower() != self.GetBranchSpecification():
                 # But first: Add this machine to the list of machines for all branches
-                branch_key = "%s<>branch_sep<>%s" % (elements[3], elements[0])
+                branch_key = "%s<>branch_sep<>%s" % (entryBranch, entryTag)
 
-                if branch_key in keylist_global:
+                if branch_key in taglist_global:
                     sys.stderr.write('Duplicate key "%s" found in configuration for branch "%s"\n'
-                                     % (branch_key, elements[3]))
+                                     % (branch_key, entryBranch))
                     sys.exit(-1)
 
-                keylist_global.append(branch_key)
-                self.machines_allbranches[branch_key] = MachineItem(elements[1], elements[2], "")
+                taglist_global.append(branch_key)
+                self.machines_allbranches[branch_key] = MachineItem(entryTag, entryHost, entryDirPath, "")
 
                 return
-
-
-        # Was a branch specified on this host entry (without a project)?
-        elif len(elements) == 4:
-            # If we're allowing branches, then a branch must be specified for the build
-            if self.GetBranchSpecification() == '':
-                sys.stderr.write('Branches disabled with branch specification on host entry - offending line:\n'
-                                 + '\'' + line.rstrip() + '\'\n')
-                sys.exit(-1)
-
-            # No match for this branch?  Just skip the host entry ...
-            if elements[3].lower() != self.GetBranchSpecification():
-                # But first: Add this machine to the list of machines for all branches
-                branch_key = "%s<>branch_sep<>%s" % (elements[3], elements[0])
-
-                if branch_key in keylist_global:
-                    sys.stderr.write('Duplicate key "%s" found in configuration for branch "%s"\n'
-                                     % (branch_key, elements[3]))
-                    sys.exit(-1)
-
-                keylist_global.append(branch_key)
-                self.machines_allbranches[branch_key] = MachineItem(elements[1], elements[2], "")
-
-                return
-
-        elif len(elements) == 3:
-            if self.GetBranchSpecification() != '':
-                sys.stderr.write('Branches enabled without branch specification on host entry - offending line:\n'
-                                 + '\'' + line.rstrip() + '\'\n')
-                sys.exit(-1)
 
         else:
             raise IOError('Bad configuration file - offending line: \'' + line.rstrip() + '\'')
 
-        if elements[0] in keylist:
-            sys.stderr.write('Duplicate key "%s" found in configuration\n' % elements[0])
+        if entryTag in taglist:
+            sys.stderr.write('Duplicate key "%s" found in configuration\n' % entryTag)
             sys.exit(-1)
 
-        if elements[1] in hostlist:
-            sys.stderr.write('Duplicate host "%s" found in configuration\n' % elements[1])
+        if entryHost in hostlist:
+            sys.stderr.write('Duplicate host "%s" found in configuration\n' % entryHost)
             sys.exit(-1)
+
+        # Verify logic for non-integrated builds and container files
+        if entryProject == 'nip':
+            if not self.options.container and not self.options.command:
+                sys.stderr.write('Must specify container (or command) for non-integrated projects (\'nip\')\n')
+                sys.exit(-1)
+        else:
+            if self.options.container:
+                sys.stderr.write('Not valid to specify container with non-integrated project\n')
+                sys.exit(-1)
 
         # Add to list of machines for all branches
-        if len(elements) > 3:
-            branch_key = "%s<>branch_sep<>%s" % (elements[3], elements[0])
-        else:
-            branch_key = "<>branch_sep<>%s" % elements[0]
+        branch_key = "%s<>branch_sep<>%s" % (entryBranch, entryTag)
 
-        if branch_key in keylist_global:
+        if branch_key in taglist_global:
             sys.stderr.write('Duplicate key "%s" found in configuration for branch "%s"\n'
-                             % (branch_key, elements[3]))
+                             % (branch_key, entryBranch))
             sys.exit(-1)
 
-        keylist_global.append(branch_key)
-        self.machines_allbranches[branch_key] = MachineItem(elements[1], elements[2], "")
+        taglist_global.append(branch_key)
+        self.machines_allbranches[branch_key] = MachineItem(entryTag, entryHost, entryDirPath, "")
 
         # Add to list of machines to process (branch-specific)
-        keylist.append(elements[0])
-        hostlist.append(elements[1])
-        self.machines[elements[0]] = MachineItem(elements[1], elements[2], project)
+        taglist.append(entryTag)
+        hostlist.append(entryHost)
+        self.machines[entryHost] = MachineItem(entryTag, entryHost, entryDirPath, entryProject)
 
     ##
     # Parse a test attribute string and set the appropriate settings
@@ -392,10 +280,10 @@ class Configuration:
     # Read and parse the configuration file
     #
     def LoadConfigurationFile(self):
-        # (Keep track of a global keylist for all branches for --initialize)
-        keylist = []
+        # (Keep track of a global taglist for all branches for --initialize)
+        taglist = []
         hostlist = []
-        keylist_global = []
+        taglist_global = []
 
         # Load the configuration file - and verify it, line by line
         f = open(self.configurationFilename, 'r')
@@ -407,23 +295,15 @@ class Configuration:
 
                 elements = line.rstrip().split(':')
 
-                # No header at all: Assume it's a host
-                if len(elements) == 1:
-                    self.ParseHostEntry(line.rstrip(), keylist, hostlist, keylist_global)
-
-                # Also allow "host:" to explicitly define a host
-                elif len(elements) == 2 and elements[0].strip().lower() == "host":
-                    self.ParseHostEntry(elements[1].rstrip(), keylist, hostlist, keylist_global)
+                # The "host:" tag explicitly defines a host and is now required
+                if len(elements) == 2 and elements[0].strip().lower() == "host":
+                    self.ParseHostEntry(elements[1].rstrip(), taglist, hostlist, taglist_global)
 
                 # Allow "branch:" to sepcify default branch to build for all builds
                 elif len(elements) == 2 and elements[0].strip().lower() == "branch":
                     self.branch = elements[1].strip()
                     if self.options.branch != None:
                         self.branch = self.options.branch
-
-                # Allow "cache:" to specify default cache settings for all builds
-                elif len(elements) == 2 and elements[0].strip().lower() == "cache":
-                    self.cacheSetting = self.ParseCacheSpec(elements[1].strip())
 
                 # Allow "exclude:" to specify a list of hosts to exclude
                 elif len(elements) == 2 and elements[0].strip().lower() == "exclude":
@@ -445,6 +325,14 @@ class Configuration:
                 elif len(elements) == 2 and elements[0].strip().lower() == "settings":
                     self.ParseSettings("configuration file", elements[1].strip())
 
+                    # Special handling for debug - override parsed options if unspecified on command line
+                    # (Build code only checks for parsed options, not setting)
+                    if not self.options.debug and not self.options.nodebug:
+                        if self.GetSetting("Debug"):
+                            self.options.debug = True
+                        else:
+                            self.options.nodebug = True
+
                 # Allow "test_attributes:" to specify the test attributes to use
                 elif len(elements) == 2 and elements[0].strip().lower() == "test_attributes":
                     self.ParseTestAttributes("configuration file", elements[1].strip())
@@ -456,10 +344,6 @@ class Configuration:
                 else:
                     raise IOError('Bad configuration file - offending line: \'' + line.rstrip() + '\'')
         f.close()
-
-        # Handle override for cache settings in the configuration file by command line
-        if self.options.cache != None:
-            self.cacheSetting = self.ParseCacheSpec(self.options.cache)
 
         # Handle override for exclude list in the configuration file by command line
         if self.options.exclude != None:
@@ -501,7 +385,7 @@ class Configuration:
             self.VerifyLogdirWritable(self.GetLogfilePriorPrefix())
 
         # Be sure we have at least one host to deal with ...
-        if len(keylist) == 0:
+        if len(taglist) == 0:
             if self.GetBranchSpecification() != '':
                 sys.stderr.write('No host entries found for branch \''
                                  + self.GetBranchSpecification()
@@ -517,6 +401,7 @@ class Configuration:
         self.InitializeSSH()
         self.ValidateHostList()
 
+
     ##
     # Initialize SSH known hosts
     #
@@ -526,6 +411,9 @@ class Configuration:
     #
     def InitializeSSH(self):
         pbuildInitialized = False
+        if not self.GetSetting("CheckValidity"):
+            pbuildInitialized = True
+
         initFilename = os.path.join(os.path.expanduser('~'), '.pbuild_init')
         try:
             initStat = os.stat(initFilename)
@@ -571,6 +459,10 @@ class Configuration:
             initFile = open(initFilename, 'w')
             initFile.close()
 
+        if self.options.initialize:
+            print "Completed host verification pass"
+            sys.exit(0)
+
         return hostsOK
 
     ##
@@ -585,13 +477,13 @@ class Configuration:
     #
     def NormalizeHostSpec(self, hostSpec):
         try:
-            # Do the easy thing first: is the entry a tag for a host?
+            # Do the easy thing first: is the entry a hostname for a host?
             if self.machines[hostSpec]:
                 return hostSpec;
         except KeyError:
-            # Nope - so loop thorugh our list of hosts looking that way
+            # Nope - so loop thorugh our list of hosts looking at tags that way
             for key in self.machines:
-                if self.machines[key].GetHost() == hostSpec:
+                if self.machines[key].GetTag() == hostSpec:
                     return key;
 
         sys.stderr.write('Failed to identify host \'%s\' in configuration\n' % hostSpec)
@@ -606,33 +498,36 @@ class Configuration:
     def ValidateHostList(self):
         # Build a list of machines to process (if none, we simply process all hosts)
         for entry in self.args:
-            host = self.NormalizeHostSpec(entry)
-            self.hostlist.append(host)
+            key = self.NormalizeHostSpec(entry)
+            if key in self.machineKeys:
+                sys.stderr.write('Duplicate host \'%s\' already in configuration\n' % key)
+                sys.exit(-1)
+            self.machineKeys.append(key)
 
         # Support the list of machines to exclude if one was specified
         if len(self.excludeList):
             # If no hosts specified to include, then let's include all hosts
             fAllHosts = False
-            if len(self.hostlist) == 0:
+            if len(self.machineKeys) == 0:
                 for key in sorted(self.machines.keys()):
-                    self.hostlist.append(key)
+                    self.machineKeys.append(key)
                 fAllHosts = True
 
             # Now exclude each of the hosts specified in the exclude list
             for entry in self.excludeList:
-                host = self.NormalizeHostSpec(entry)
+                key = self.NormalizeHostSpec(entry)
 
                 # If host wasn't in our list, then must be specific list of
                 # hosts to build - that's not an error condition
                 #
                 # Don't remove host that's specifically included in include list
-                if host in self.hostlist and fAllHosts:
-                    self.hostlist.remove(host)
+                if key in self.machineKeys and fAllHosts:
+                    self.machineKeys.remove(key)
 
         # Okay, we're done.  State of the world:
         #
-        # If self.hostlist is empty, then all machines should be processed
-        # Else self.hostlist is the list of tags to process (perhaps pruned by the exclude list)
+        # If self.machineKeys is empty, then all machines should be processed
+        # Else self.machineKeys is the list of tags to process (perhaps pruned by the exclude list)
 
     ##
     # Verify that our logfile directory is writable
@@ -656,3 +551,19 @@ class Configuration:
         except:
             sys.stderr.write('Error writing or deleting during logfile write test - filename \'%s\'\n' % outfname)
             sys.exit(-1)
+
+    ##
+    # Verify that the project name is valid
+    #
+    # Project Name	Description
+    #
+    # cm		Configuration Manager
+    # om		Operations Manager
+    # vmm		Virtual Machine Manager
+    # nip		Non-integrated project (for use with container files)
+
+    def VerifyProjectName(self, project):
+        if project.lower() in ['cm', 'om', 'vmm', 'nip']:
+            return True
+
+        return False

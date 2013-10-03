@@ -100,23 +100,23 @@ Options:
                         use to restrict unit tests
   --branch=BRANCH       Branch specification to build (only build hosts with
                         this branch specification)
-  --cache=CACHE         Specifies 'make cache' settings to be specified on the
-                        build host (if not specified, 'make cache' settings
-                        are unchanged on the destination host)
+  -d, --debug           Build targets in DEBUG mode
   --command=COMMAND     Executes the specified command string rather than
                         buiding/running a command script to perform a remote
                         build
+  --container=CONTAINER
+                        Name of container file (typically .tar file) for non-
+                        standard builds
   --exclude=EXCLUDE     Overrides default exclude list from configuration file
                         (if any); comma-separated list of hosts to exclude
                         from the build
-  -f, --full            Perform a full build (does --cache=NOUNIT
-                        --target='all testrun')
   --initialize          Verify public keys in known_hosts file
   -l, --list            List host configuration information and exit
   --logdir=LOGDIR       Overrides 'logdir' from configuration file
   --logdir_prior=LOGDIR_PRIOR
                         Overrides 'logdir_prior' from configuration file
   --nocleanup           Skip the 'tf undo' cleanup at the end of a build
+  --nodebug             Build targets in NODEBUG mode
   --nocurses            Disable curses for dynamic screen updating (may be
                         useful for diagnostic purposes)
   --settings=SETTINGS   Overrides default settings from program and
@@ -153,6 +153,13 @@ it is not prefixed by "no", then the setting is enabled.
 
 Settings that can be controlled:
 
+CheckValidity:	Verify, when the .pbuild file is modified, that all branches
+		are valid and are set up on each machine.  This is the default
+		behavior and serves to catch build problems early.  But, for
+		very experienced PBUILD users, you may wish to disable this.
+
+Debug:		Build code in DEBUG mode.
+
 DeleteLogfiles: Prior to starting a build, delete all variations of log files
 		that will be written for that build.  This is useful to avoid
 		clutter when using "LogfileRename" (described below).
@@ -184,7 +191,7 @@ TFProxStart:	Automatically try and start the TFS Proxy Server (tfprox) in
 		privileges, then you'll need to disable this option.
 
 Default settings are:
-	"DeleteLogfiles,NoDiagnoseErrors,NoLogfileRename,Progress,SummaryScreen,TFProxStart"
+	"CheckValidity,Debug,DeleteLogfiles,NoDiagnoseErrors,NoLogfileBranch,NoLogfileRename,Progress,SummaryScreen,TFProxStart"
 
 
 Output description for "Progress" setting:
@@ -209,44 +216,6 @@ Note that if the first byte is a "?" rather than a "-", as in:
 this means that no log text has been received for 31 seconds or more (in other
 words, the host does not appear to be responding).  Once the host performs
 additional work, the "?" will change back to a "-".
-
-
-Support for 'make cache':
-
-For the --cache qualifier (to support the 'make cache' facility), the following
-settings may be specified.  For ease of data entry, case is not significant.
-If you wish to specify multiple entries for 'make cache', you may separate
-entries with commas or spaces (if spaces, be sure to quote the result!):
-
-  BUILD_TYPE		(allowed values: Debug, Release) 
-  BUILD_PROFILING	(allowed values: false, prof, gprof, quantify)
-  BUILD_PEGASUS		(allowed values: true, false)
-  BUILD_PEGASUS_DEBUG	(allowed values: true, false)
-
-In addition to the above, some special "keywords" will be allowed which have no
-value.  These perform shortcut substiutions, and are:
-
-  SCXONLY	Does: "BUILD_PEGASUS=false"
-  ALL		Does: "BUILD_PEGASUS=true"
-  RESET		Does: "BUILD_TYPE=Release BUILD_PROFILING=false
-  		        BUILD_PEGASUS=true BUILD_PEGASUS_DEBUG=false
-			UNITTESTS_SUBSET="
-		(Effectively does a full reset with default cache settings)
-  DEBUG		Does: "BUILD_TYPE=Debug BUILD_PEGASUS_DEBUG=true"
-  RELEASE	Does: "BUILD_TYPE=Release BUILD_PEGASUS_DEBUG=false"
-  NOUNITTESTS	Does: "UNITTEESTS_SUBSET="
-
-Special keywords can be chained.  Like: "RESET,DEBUG,BUILD_PEGASUS=false".
-
-Additionally, any of these keywords (or values) can be abbreviated.  So, for
-example, --cache="N build_t=d" will do a "UNITTESTS_SUBSET= BUILD_TYPE=Debug".
-
-If one keyword is a subset of another, then you may not abbreviate it.  Thus,
-due to BUILD_PEGASUS/BUILD_PEGASUS_DEBUG, you can't abbreviate "BUILD_PEGASUS"
-but you can abbreviate BUILD_PEGASUS_DEBUG.  Thus,
-    --cache="buILD_PegaSUS=t BUILD_PEGASUS_=f"
-will result in:
-     "BUILD_PEGASUS=true BUILD_PEGASUS_DEBUG=false".
 
 
 Support for testrun attributes and names:
