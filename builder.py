@@ -290,13 +290,21 @@ class BuildHost(threading.Thread):
         queue.append('echo ========================= Performing Determining debug/release')
         queue.append('date')
 
+        config_options = ''
+        if 'om' in self.config.configure_options:
+            config_options = self.config.configure_options['om']
+
         if not self.config.options.debug:
             queue.append('echo "Performing RELEASE build"')
-            queue.append('./configure')
+            if config_options:
+                queue.append('echo "  (Configuration options: %s)"' % config_options)
+            queue.append('./configure %s' % config_options)
             queue.append('EXITSTATUS=$?')
         else:
             queue.append('echo "Performing DEBUG build"')
-            queue.append('./configure --enable-debug')
+            if config_options:
+                queue.append('echo "  (Configuration options: %s --enable-debug)"' % config_options)
+            queue.append('./configure %s --enable-debug' % config_options)
             queue.append('EXITSTATUS=$?')
         queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
 
@@ -403,13 +411,21 @@ class BuildHost(threading.Thread):
         queue.append('echo ========================= Performing Determining debug/release')
         queue.append('date')
 
+        config_options = ''
+        if 'cm' in self.config.configure_options:
+            config_options = self.config.configure_options['cm']
+
         if not self.config.options.debug:
             queue.append('echo "Performing RELEASE build"')
-            queue.append('./configure')
+            if config_options:
+                queue.append('echo "  (Configuration options: %s)"' % config_options)
+            queue.append('./configure %s' % config_options)
             queue.append('EXITSTATUS=$?')
         else:
             queue.append('echo "Performing DEBUG build"')
-            queue.append('./configure --enable-debug')
+            if config_options:
+                queue.append('echo "  (Configuration options: %s --enable-debug)"' % config_options)
+            queue.append('./configure %s --enable-debug' % config_options)
             queue.append('EXITSTATUS=$?')
         queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
 
@@ -496,18 +512,6 @@ class BuildHost(threading.Thread):
         queue.append('make distclean')
         queue.append('echo')
         queue.append('')
-        queue.append('if [ $DEBUG -eq 0 ]; then')
-        queue.append('    echo "Performing RELEASE build"')
-        queue.append('    ./configure')
-        queue.append('    EXITSTATUS=$?')
-        queue.append('else')
-        queue.append('    echo "Performing DEBUG build"')
-        queue.append('    ./configure --enable-debug')
-        queue.append('    EXITSTATUS=$?')
-        queue.append('fi')
-        queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
-        queue.append('')
-        queue.append('echo')
 
         queue.append('')
         queue.append('if [ ${NEEDS_TFGET} -ne 0 ]; then')
@@ -533,13 +537,21 @@ class BuildHost(threading.Thread):
                 queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
             queue.append('echo')
 
+        config_options = ''
+        if 'vmm' in self.config.configure_options:
+            config_options = self.config.configure_options['vmm']
+
         if not self.config.options.debug:
             queue.append('echo "Performing RELEASE build"')
-            queue.append('./configure')
+            if config_options:
+                queue.append('echo "  (Configuration options: %s)"' % config_options)
+            queue.append('./configure %s' % config_options)
             queue.append('EXITSTATUS=$?')
         else:
             queue.append('echo "Performing DEBUG build"')
-            queue.append('./configure --enable-debug')
+            if config_options:
+                queue.append('echo "  (Configuration options: %s --enable-debug)"' % config_options)
+            queue.append('./configure %s --enable-debug' % config_options)
             queue.append('EXITSTATUS=$?')
         queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
 
@@ -648,13 +660,21 @@ class BuildHost(threading.Thread):
             queue.append('echo ========================= Performing Determining debug/release')
             queue.append('date')
 
+            config_options = ''
+            if 'nip' in self.config.configure_options:
+                config_options = self.config.configure_options['nip']
+
             if not self.config.options.debug:
                 queue.append('echo "Performing RELEASE build"')
-                queue.append('./configure --dev')
+                if config_options:
+                    queue.append('echo "  (Configuration options: %s)"' % config_options)
+                queue.append('./configure %s' % config_options)
                 queue.append('EXITSTATUS=$?')
             else:
                 queue.append('echo "Performing DEBUG build"')
-                queue.append('./configure --dev --enable-debug')
+                if config_options:
+                    queue.append('echo "  (Configuration options: %s --enable-debug)"' % config_options)
+                queue.append('./configure %s --enable-debug' % config_options)
                 queue.append('EXITSTATUS=$?')
             queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
 

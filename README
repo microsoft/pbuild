@@ -141,6 +141,23 @@ PBUILD:			Path where the PBUILD configuraiton file can be found.
 			environment variable is set.
 
 
+Valid Projects:
+
+Projects are specified in per-project configuration options as well as host
+entries.  Valid projects are defined as follows:
+
+	  CM	Configuration Manager
+	  OM	Operations Manager
+	  VMM	Virtual Machine Manager
+	  NIP	Non-Integrated Project
+
+The 'NIP' project, in particular, is for non-integrated projects.  This is
+used when PBUILD knows nothing of building the project (other than the usual
+'./configure' and 'make all test' choices).  Because it's a non-integrated
+build, PBUILD doesn't know how to access the source code.  As such, a container
+file must be specified with said builds (see --container qualifier above).
+
+
 Settings that modify behavior:
 
 Settings are set to "reasonable defaults for most people" automatically.  By
@@ -192,6 +209,25 @@ TFProxStart:	Automatically try and start the TFS Proxy Server (tfprox) in
 
 Default settings are:
 	"CheckValidity,Debug,DeleteLogfiles,NoDiagnoseErrors,NoLogfileBranch,NoLogfileRename,Progress,SummaryScreen,TFProxStart"
+
+
+Per-Project Configuration Options
+
+PBUILD supports per-project configuration options.  This is useful if you need
+to set project-specific options.  Two such options are currently supported:
+
+make_target : project : options
+configure_options : project : options
+
+Spaces around the ":" separators in the above example are optional.  Note that
+fields (project or option fields) must not contain any ":" characters.
+
+One particular option is necessary for the OMI project:
+
+    configure_options : nip : --dev
+
+This says that, when './configure' is run, the '--dev' qualifier must be used
+to signify a developer build and to enable unit tests.
 
 
 Output description for "Progress" setting:

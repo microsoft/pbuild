@@ -72,6 +72,7 @@ class Configuration:
         self.excludeList = []
         self.test_attr = ''
         self.test_list = ''
+        self.configure_options = {}
 
         if self.options.branch != None:
             self.branch = self.options.branch
@@ -341,8 +342,32 @@ class Configuration:
                 elif len(elements) == 2 and elements[0].strip().lower() == "test_list":
                     self.test_list = elements[1].strip()
 
+                # Per-project configuration options ...
+                #
+                # Format of these should be:
+                #	keyword:<Project>:<value>
+
+                elif len(elements) == 3 and elements[0].strip().lower() == "make_target":
+                    # Validate the project name
+                    elements[1] = elements[1].strip().lower()
+                    if not self.VerifyProjectName(elements[1]):
+                        raise IOError('Bad project name in configuration file - offending line: \'' + line.rstrip() + '\'')
+
+                    # If target wasn't overridden on command line, replace it with value from configuration file
+                    if self.options.target == "target_default":
+                        self.options.target = elements[2]
+
+                elif len(elements) == 3 and elements[0].strip().lower() == "configure_options":
+                    # Validate the project name
+                    elements[1] = elements[1].strip().lower()
+                    if not self.VerifyProjectName(elements[1]):
+                        raise IOError('Bad project name in configuration file - offending line: \'' + line.rstrip() + '\'')
+
+                    self.configure_options[elements[1]] = elements[2]
+
                 else:
                     raise IOError('Bad configuration file - offending line: \'' + line.rstrip() + '\'')
+
         f.close()
 
         # Handle override for exclude list in the configuration file by command line

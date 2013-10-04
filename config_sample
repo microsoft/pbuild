@@ -49,6 +49,13 @@ branch: main
 # settings: LogfileRename
 
 #
+# Per-project configuration options:
+#   Keyword:Project:value
+#
+# Valid keywords:  make_target, configure_options
+# configure_options : nip : --dev
+
+#
 # Test settings that may be customized:
 # Attributes are controlled with "test_attributes",
 # Test names are controlled with "test_names".
