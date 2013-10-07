@@ -174,7 +174,7 @@ class pbuild:
 
             # We really prefer to list sorted by tags, so do so
             machines_byTag = {}
-            for key in sorted(config.machines.keys()):
+            for key in config.machines.keys():
                 machines_byTag[config.machines[key].GetTag()] = config.machines[key]
             for key in sorted(machines_byTag.keys()):
                 print "%-20s %-10s %s" % (machines_byTag[key].GetTag() + ':', machines_byTag[key].GetProject(), machines_byTag[key].GetHost())

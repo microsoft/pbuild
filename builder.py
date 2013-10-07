@@ -656,34 +656,35 @@ class BuildHost(threading.Thread):
         queue.append('echo "Binary payload has been extracted successfully ..."')
 
         if len(self.config.options.target) != 0:
-            queue.append('echo')
-            queue.append('echo ========================= Performing Determining debug/release')
-            queue.append('date')
-
-            config_options = ''
-            if 'nip' in self.config.configure_options:
-                config_options = self.config.configure_options['nip']
-
-            if not self.config.options.debug:
-                queue.append('echo "Performing RELEASE build"')
-                if config_options:
-                    queue.append('echo "  (Configuration options: %s)"' % config_options)
-                queue.append('./configure %s' % config_options)
-                queue.append('EXITSTATUS=$?')
-            else:
-                queue.append('echo "Performing DEBUG build"')
-                if config_options:
-                    queue.append('echo "  (Configuration options: %s --enable-debug)"' % config_options)
-                queue.append('./configure %s --enable-debug' % config_options)
-                queue.append('EXITSTATUS=$?')
-            queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
-
             # Our target is?
             target = "all tests"
             if self.config.options.target != "target_default":
                 target = self.config.options.target
 
             if not target.lower().startswith('none;'):
+                queue.append('echo')
+                queue.append('echo ========================= Performing Determining debug/release')
+                queue.append('date')
+
+                config_options = ''
+                if 'nip' in self.config.configure_options:
+                    config_options = self.config.configure_options['nip']
+
+                    if not self.config.options.debug:
+                        queue.append('echo "Performing RELEASE build"')
+                        if config_options:
+                            queue.append('echo "  (Configuration options: %s)"' % config_options)
+                        queue.append('./configure %s' % config_options)
+                        queue.append('EXITSTATUS=$?')
+                    else:
+                        queue.append('echo "Performing DEBUG build"')
+                        if config_options:
+                            queue.append('echo "  (Configuration options: %s --enable-debug)"' % config_options)
+                        queue.append('./configure %s --enable-debug' % config_options)
+                        queue.append('EXITSTATUS=$?')
+                    queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
+
+                # Start running the 'make' targets
                 # Split our targets into a list
                 targets = target.split()
 
@@ -1236,8 +1237,13 @@ class Builder:
 
         if self.config.GetSetting('SummaryScreen'):
             print "Final status:\n"
+
+            # We really prefer to list sorted by tags, so do so
+            hosts_byTag = {}
             for host in hosts:
-                print "%-19s %-25s %s" % (host.tag, host.hostname, host.completionStatus)
+                hosts_byTag[host.tag] = host
+            for key in sorted(hosts_byTag.keys()):
+                print "%-19s %-25s %s" % (hosts_byTag[key].tag, hosts_byTag[key].hostname, hosts_byTag[key].completionStatus)
             print
 
         # All done
