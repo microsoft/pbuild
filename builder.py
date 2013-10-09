@@ -609,7 +609,7 @@ class BuildHost(threading.Thread):
         queue.append('set +e')
         queue.append('# set -x')
         queue.append('')
-        queue.append('PATH=/usr/bin:/bin')
+        queue.append('PATH=$PATH:/usr/bin:/bin')
         queue.append('umask 022')
         queue.append('')
         queue.append('# Can\'t use something like \'readlink -e $0\' because that doesn\'t work everywhere')
@@ -634,7 +634,7 @@ class BuildHost(threading.Thread):
         queue.append('')
 
         queue.append('echo')
-        queue.append('echo ========================= Performing Clensing prior builds')
+        queue.append('echo ========================= Performing Cleansing prior builds')
         queue.append('rm -rf %s/*' % self.path)
         queue.append('')
 
