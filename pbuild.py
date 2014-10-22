@@ -55,11 +55,6 @@ class pbuild:
                           dest="command",
                           help="Executes the specified command string rather than buiding/running a command script to perform a remote build")
 
-        parser.add_option("", "--container",
-                          type="string",
-                          dest="container",
-                          help="Name of container file (typically .tar file) for non-standard builds")
-
         parser.add_option("", "--exclude",
                           type="string",
                           dest="exclude",
@@ -129,20 +124,7 @@ class pbuild:
         if options.debug and options.nodebug:
             parser.error('Options --debug and --nodebug conflict with one another')
 
-        if options.container:
-            if options.command or options.nocleanup or options.shelveset or options.tests or options.test_attrs:
-                parser.error('Option --container conflicts with other specified options')
-
-            # Allow "~/" construct on the container file and validate that we can find it
-            options.container = options.container.replace('~', os.path.join(os.path.expanduser('~')))
-
-            # Verify that the container file actually exists
-            try:
-                containerStat = os.stat(options.container)
-            except OSError:
-                parser.error('Container file %s could not be found' % options.container)
-
-        elif options.debug or options.nodebug or options.nocleanup or options.shelveset:
+        if options.debug or options.nodebug or options.nocleanup or options.shelveset:
             # We're doing some kind of a build: Be sure there's no conflict with other qualifiers
             if options.command:
                 parser.error('Option --command conflicts with other specified options\n')

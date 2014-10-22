@@ -104,9 +104,6 @@ Options:
   --command=COMMAND     Executes the specified command string rather than
                         buiding/running a command script to perform a remote
                         build
-  --container=CONTAINER
-                        Name of container file (typically .tar file) for non-
-                        standard builds
   --exclude=EXCLUDE     Overrides default exclude list from configuration file
                         (if any); comma-separated list of hosts to exclude
                         from the build
@@ -146,16 +143,11 @@ Valid Projects:
 Projects are specified in per-project configuration options as well as host
 entries.  Valid projects are defined as follows:
 
+	  OMI	Open Management Infrastructure
+	  PAL	Platform Abstraction Layer
 	  CM	Configuration Manager
 	  OM	Operations Manager
 	  VMM	Virtual Machine Manager
-	  NIP	Non-Integrated Project
-
-The 'NIP' project, in particular, is for non-integrated projects.  This is
-used when PBUILD knows nothing of building the project (other than the usual
-'./configure' and 'make all test' choices).  Because it's a non-integrated
-build, PBUILD doesn't know how to access the source code.  As such, a container
-file must be specified with said builds (see --container qualifier above).
 
 
 Settings that modify behavior:
@@ -221,13 +213,6 @@ configure_options : project : options
 
 Spaces around the ":" separators in the above example are optional.  Note that
 fields (project or option fields) must not contain any ":" characters.
-
-One particular option is necessary for the OMI project:
-
-    configure_options : nip : --dev
-
-This says that, when './configure' is run, the '--dev' qualifier must be used
-to signify a developer build and to enable unit tests.
 
 
 Output description for "Progress" setting:

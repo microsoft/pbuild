@@ -9,7 +9,8 @@
 #
 
 import os
-from stat import *
+import stat
+from project import *
 import subprocess
 import sys
 
@@ -206,7 +207,7 @@ class Configuration:
             entryBranch = elements[3]
             entryProject = elements[4].lower()
 
-            # Validate the project name - 'nip' is 'non-intregrated project', used for containers
+            # Validate the project name
             if not self.VerifyProjectName(entryProject):
                 raise IOError('Bad project in configuration file - offending line: \'' + line.rstrip() + '\'')
 
@@ -235,16 +236,6 @@ class Configuration:
         if entryHost in hostlist:
             sys.stderr.write('Duplicate host "%s" found in configuration\n' % entryHost)
             sys.exit(-1)
-
-        # Verify logic for non-integrated builds and container files
-        if entryProject == 'nip':
-            if not self.options.container and not self.options.command:
-                sys.stderr.write('Must specify container (or command) for non-integrated projects (\'nip\')\n')
-                sys.exit(-1)
-        else:
-            if self.options.container:
-                sys.stderr.write('Not valid to specify container with non-integrated project\n')
-                sys.exit(-1)
 
         # Add to list of machines for all branches
         branch_key = "%s<>branch_sep<>%s" % (entryBranch, entryTag)
@@ -580,15 +571,10 @@ class Configuration:
     ##
     # Verify that the project name is valid
     #
-    # Project Name	Description
-    #
-    # cm		Configuration Manager
-    # om		Operations Manager
-    # vmm		Virtual Machine Manager
-    # nip		Non-integrated project (for use with container files)
-
     def VerifyProjectName(self, project):
-        if project.lower() in ['cm', 'om', 'vmm', 'nip']:
+        factory = ProjectFactory(project)
+
+        if factory.Validate():
             return True
 
         return False
