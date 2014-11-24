@@ -22,7 +22,7 @@ class ProjectFactory:
     # Return true if a project is valid (false otherwise)
     #
     def Validate(self):
-        if self.project in ['apache', 'cm', 'om', 'omi', 'pal', 'vmm']:
+        if self.project in ['apache', 'cm', 'mysql', 'om', 'omi', 'pal', 'vmm']:
             return True
 
         return False
@@ -32,6 +32,8 @@ class ProjectFactory:
             return ProjectApache()
         elif self.project == 'cm':
             return ProjectCM()
+        elif self.project == 'mysql':
+            return ProjectMySQL()
         elif self.project == 'om':
             return ProjectOM()
         elif self.project == 'omi':
@@ -132,7 +134,7 @@ class ProjectApache(Project):
         self.cleanList = [ "docs", "installer", "source", "test" ]
         self.dependentProjects = [ "omi", "pal" ]
         self.makeDependencies = False
-        self.projectName = "om"
+        self.projectName = "apache"
         self.sourceDirectory = "source"
         self.targets = "all test"
 
@@ -148,6 +150,19 @@ class ProjectCM(Project):
         self.projectName = "cm"
         self.sourceDirectory = "Unix/src"
         self.targets = "all release test"
+
+class ProjectMySQL(Project):
+    ##
+    # Ctor.
+    def __init__(self):
+        self.buildDirectory = "build"
+        self.cleanPaths = [ "." ]
+        self.cleanList = [ "installer", "source", "test" ]
+        self.dependentProjects = [ "omi", "pal" ]
+        self.makeDependencies = False
+        self.projectName = "mysql"
+        self.sourceDirectory = "source"
+        self.targets = "all test"
 
 class ProjectOM(Project):
     ##
