@@ -156,9 +156,8 @@ class BuildHost(threading.Thread):
         queue.append('echo')
         queue.append('echo ========================= Performing tf undo / cleanup')
         queue.append('date')
-        for dir in paths:
-            queue.append('tf undo -recursive %s' % dir)
-            # Can't check status - 'tf undo' returns an error with nothing to undo
+        queue.append('tf undo -recursive ~/')
+        # Can't check status - 'tf undo' returns an error with nothing to undo
         queue.append('echo The following files are being deleted:')
         for pathDir in paths:
             for cleanDir in cleanList:
