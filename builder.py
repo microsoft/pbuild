@@ -372,6 +372,11 @@ class BuildHost(threading.Thread):
                     self.cLogSubLines = 0
                 outf.write(line)
 
+                if line.startswith("make: warning:  Clock skew detected."):
+                    outf.write("FATAL ERROR: Terminating process due to clock skew!");
+                    outf.write("*** Check destination system to verify remote build was killed! ***")
+                    self.process.terminate()
+
             self.process.communicate()
         else:
             outf = open(outfname, 'a+')
