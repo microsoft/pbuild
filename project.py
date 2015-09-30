@@ -22,7 +22,7 @@ class ProjectFactory:
     # Return true if a project is valid (false otherwise)
     #
     def Validate(self):
-        if self.project in ['apache', 'cm', 'mysql', 'om', 'omi', 'pal', 'vmm']:
+        if self.project in ['apache', 'cm', 'mysql', 'om', 'omi', 'oms', 'pal', 'vmm']:
             return True
 
         return False
@@ -38,6 +38,8 @@ class ProjectFactory:
             return ProjectOM()
         elif self.project == 'omi':
             return ProjectOMI()
+        elif self.project == 'oms':
+            return ProjectOMS()
         elif self.project == 'pal':
             return ProjectPAL()
         elif self.project == 'vmm':
@@ -191,6 +193,19 @@ class ProjectOMI(Project):
         self.makeDependencies = False
         self.projectName = "omi"
         self.sourceDirectory = "Unix"
+        self.targets = "all"
+
+class ProjectOMS(Project):
+    ##
+    # Ctor.
+    def __init__(self):
+        self.buildDirectory = "build"
+        self.cleanPaths = [ "." ]
+        self.cleanList = [ "installer", "source", "test" ]
+        self.dependentProjects = [ "omi", "pal" ]
+        self.makeDependencies = False
+        self.projectName = "oms"
+        self.sourceDirectory = "source"
         self.targets = "all"
 
 class ProjectPAL(Project):
