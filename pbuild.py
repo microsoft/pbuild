@@ -26,7 +26,7 @@ class pbuild:
             usage="usage: %prog [option-list] [host-list]   (use --help or -h for help)",
             description=
                 "pbuild will allow you to do a build across all platforms using your own "
-                "workspaces. If a build problem occurs, all files are left completely intact, "
+                "git clones. If a build problem occurs, all files are left completely intact, "
                 "simplifying the steps you must perform to replicate the problem. "
                 "pbuild supports a wide variety of options, specified below.  For more "
                 "information, view the README file checked in with pbuild."
@@ -41,14 +41,18 @@ class pbuild:
                           dest="test_attrs",
                           help="Specifies the unit test attributes that you wish to use to restrict unit tests")
 
-        parser.add_option("", "--branch",
+        parser.add_option("-b", "--branch",
                           type="string",
                           dest="branch",
-                          help="Branch specification to build (only build hosts with this branch specification)")
+                          help="Selects the branch for the top level project or superproject")
 
         parser.add_option("-d", "--debug",
                           action="store_true", dest="debug", default=False,
                           help="Build targets in DEBUG mode")
+
+        parser.add_option("", "--clone",
+                          action="store_true", dest="clone", default=False,
+                          help="Forces a new clone of the repository, even if repository already exists")
 
         parser.add_option("", "--command",
                           type="string",
@@ -78,10 +82,6 @@ class pbuild:
                           dest="logdir_prior",
                           help="Overrides 'logdir_prior' from configuration file")
 
-        parser.add_option("", "--nocleanup",
-                          action="store_true", dest="nocleanup", default=False,
-                          help="Skip the 'tf undo' cleanup at the end of a build")
-
         parser.add_option("", "--nodebug",
                           action="store_true", dest="nodebug", default=False,
                           help="Build targets in NODEBUG mode")
@@ -90,15 +90,20 @@ class pbuild:
                           action="store_true", dest="nocurses", default=False,
                           help="Disable curses for dynamic screen updating (may be useful for diagnostic purposes)")
 
+        parser.add_option("", "--select",
+                          type="string",
+                          dest="select",
+                          help="Select specification to build (only build hosts with this select specification)")
+
         parser.add_option("", "--settings",
                           type="string",
                           dest="settings",
                           help="Overrides default settings from program and configuration file (i.e. 'ShowSummary,LogFile')")
 
-        parser.add_option("-s", "--shelveset",
+        parser.add_option("-s", "--subproject",
                           type="string",
-                          dest="shelveset",
-                          help="Specifies the shelveset name to unshelve prior to the build; may be a comma-separated list")
+                          dest="subproject",
+                          help="Comma-separated list of subproject:branch pairs to select branches in subprojects, like \"opsmgr:jeff-sun,pal:jeff-sun\"")
 
         parser.add_option("-t", "--target",
                           type="string",
@@ -124,7 +129,7 @@ class pbuild:
         if options.debug and options.nodebug:
             parser.error('Options --debug and --nodebug conflict with one another')
 
-        if options.debug or options.nodebug or options.nocleanup or options.shelveset:
+        if options.branch or options.debug or options.nodebug or options.subproject:
             # We're doing some kind of a build: Be sure there's no conflict with other qualifiers
             if options.command:
                 parser.error('Option --command conflicts with other specified options\n')
@@ -148,7 +153,7 @@ class pbuild:
         # Support for the --list qualifier
         if self.options.list:
             print "Logfile Directory:", config.GetLogfilePrefix()
-            print "Branch:           ", config.GetBranchSpecification()
+            print "Select:           ", config.GetSelectSpecification()
             print "Settings:         ", config.currentSettings
             print "\n"
             print "%-20s %-10s %s" % ("Machine Tag", "Project", "Host Address")

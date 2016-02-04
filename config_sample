@@ -18,19 +18,19 @@
 # Be certain to create the logfile directory prior to running pbuild
 
 #
-# Default branch to build if unspecified on command line.
-# With no customization, you get:  ""  (no branch).
+# Default selector to build if unspecified on command line.
+# With no customization, you get:  ""  (no selector).
 #
-# If no default branch is defined, and no branch is specified on the command
-# line, then no host entries may contain branch specifications (for backwards
-# compatibility, or to insist that a branch is specified).
+# If no default selector is defined, and no selector is specified on the command
+# line, then no host entries may contain select specifications (for backwards
+# compatibility, or to insist that a selector is specified).
 #
 # NOTE: This line must appear before all host entries to be handled properly!
 #
 # You can customize with a line like the following:
-# branch: main
+# select: main
 
-branch: main
+select: main
 
 #
 # Systems to exclude in the build:
@@ -42,7 +42,7 @@ branch: main
 #
 # Settings that may be customized:
 # With no cusomization, you get:
-#   "CheckValidity,Debug,DeleteLogfiles,NoDiagnoseErrors,NoLogfileBranch,NoLogfileRename,Progress,SummaryScreen,TFProxStart"
+#   "CheckValidity,Debug,DeleteLogfiles,NoDiagnoseErrors,NoLogfileRename,NoLogfileSelect,Progress,SummaryScreen"
 #
 # You can customize with a line like the following:
 #
@@ -74,22 +74,11 @@ branch: main
 #   Key (name for referring to the entry)
 #   Host name (DNS name or IP address)
 #   Directory path on host
-#   Optional: Branch specification (to match with command line and/or default)
-
-#
-# This rest of the file contains lines with three pieces of information per
-# line (space separated):
-#   Optional: "Host:" constant to specify that this is a host entry
-#   Key (name for referring to the entry)
-#   Host name (DNS name or IP address)
-#   Directory path on host
-#   Optional: Branch specification (to match with command line and/or default)
-#   Optional: Project (must specify branch to specify project)
+#   Optional: Select specification (to match with command line and/or default)
+#   Optional: Project (must specify selector to specify project)
 #      Project must be one of:
 #         om (for Operations Manager)
 #         cm (for Configuration Manager), or
-#         nw (for NanoWEBM)
+#         a host of others (see documentation)
 #      If not specified, will default to om
 
-# For sample CORE hosts, see file:	config_hosts_core
-# For sample INTEROP hosts, see file:	config_hosts_interop

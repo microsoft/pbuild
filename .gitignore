@@ -1,0 +1,3 @@
+# The .gitignore file for the pbuild project
+
+*.pyc

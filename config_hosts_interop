@@ -1,8 +1,0 @@
-host:	aix_5.3		scxaix2			~/dev		main
-host:	hp_v2_ia64	scxhpv02		~/dev		main
-host:	hp_v2_risc	scxhpr6			~/dev		main
-host:	hp_v3_ia64	scxhpi2			~/dev		main
-host:	hp_v3_risc	scxhpr1			~/dev		main
-host:	redhat_5_32	scx-rh50-bld-02		~/dev		main
-host:	sun_5.10_sparc	scxsun06		~/dev		main
-host:	suse_10_32	suse-devbuild		~/dev		main

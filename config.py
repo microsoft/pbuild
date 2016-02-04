@@ -68,25 +68,25 @@ class Configuration:
 
         self.machineKeys = []
         self.machines = {}
-        self.machines_allbranches = {}
+        self.machines_allselects = {}
         self.currentSettings = {}
         self.excludeList = []
         self.test_attr = ''
         self.test_list = ''
         self.configure_options = {}
 
-        if self.options.branch != None:
-            self.branch = self.options.branch
+        if self.options.select != None:
+            self.select = self.options.select
         else:
-            self.branch = ''
+            self.select = ''
 
         # Define the valid settings options (can be prefixed with "no")
         # Set the default settings along the way.  Can be overridden by:
         #   1. Configuration file
         #   2. Command line option
 
-        self.validSettings = [ 'checkvalidity', 'debug', 'deletelogfiles', 'diagnoseerrors', 'logfilebranch', 'logfilerename', 'progress', 'summaryscreen', 'tfproxstart' ]
-        self.ParseSettings('defaults', 'CheckValidity,Debug,DeleteLogfiles,NoDiagnoseErrors,NoLogfileBranch,NoLogfileRename,Progress,SummaryScreen,TFProxStart')
+        self.validSettings = [ 'checkvalidity', 'debug', 'deletelogfiles', 'diagnoseerrors', 'logfilerename', 'logfileselect', 'progress', 'summaryscreen' ]
+        self.ParseSettings('defaults', 'CheckValidity,Debug,DeleteLogfiles,NoDiagnoseErrors,NoLogfileRename,NoLogfileSelect,Progress,SummaryScreen')
 
         # Default location for PBUILD logfiles (include trailing "/" in path)
         self.logfilePrefix = os.path.join(os.path.expanduser('~'), '')
@@ -103,11 +103,11 @@ class Configuration:
             self.configurationFilename = os.path.join(os.path.expanduser('~'), '.pbuild')
 
     ##
-    # Get the branch to build.  If empty, no branch specifications are allowed
+    # Get the selector to build.  If empty, no selector specifications are allowed
     # (for backwards compatibility).
     #
-    def GetBranchSpecification(self):
-        return self.branch.lower()
+    def GetSelectSpecification(self):
+        return self.select.lower()
 
     ##
     # Get the configuration filename.  Controlled by environment variable
@@ -181,7 +181,7 @@ class Configuration:
     #
     # Host entries can be of the following format:
     #
-    # host: tag  host  directory  branch  project
+    # host: tag  host  directory  selector  project
     #
     # Note: "host:" tag is removed before we're called.
 
@@ -191,38 +191,38 @@ class Configuration:
         entryTag = ""
         entryHost = ""
         entryDirPath = ""
-        entryBranch = ""
+        entrySelect = ""
         entryProject = ""
 
-        # Was both a branch and project specified on this host entry?
+        # Was both a selector and project specified on this host entry?
         if len(elements) == 5:
-            if self.GetBranchSpecification() == '':
-                sys.stderr.write('No branch specified - branch specification is required for host entry - offending line:\n'
+            if self.GetSelectSpecification() == '':
+                sys.stderr.write('No selector specified - select specification is required for host entry - offending line:\n'
                                  + '\'' + line.rstrip() + '\'\n')
                 sys.exit(-1)
 
             entryTag = elements[0].lower()
             entryHost = elements[1]
             entryDirPath = elements[2]
-            entryBranch = elements[3]
+            entrySelect = elements[3]
             entryProject = elements[4].lower()
 
             # Validate the project name
             if not self.VerifyProjectName(entryProject):
                 raise IOError('Bad project in configuration file - offending line: \'' + line.rstrip() + '\'')
 
-            # No match for this branch?  Just skip the host entry ...
-            if entryBranch.lower() != self.GetBranchSpecification():
-                # But first: Add this machine to the list of machines for all branches
-                branch_key = "%s<>branch_sep<>%s" % (entryBranch, entryTag)
+            # No match for this selector?  Just skip the host entry ...
+            if entrySelect.lower() != self.GetSelectSpecification():
+                # But first: Add this machine to the list of machines for all selectors
+                select_key = "%s<>select_sep<>%s" % (entrySelect, entryTag)
 
-                if branch_key in taglist_global:
-                    sys.stderr.write('Duplicate key "%s" found in configuration for branch "%s"\n'
-                                     % (branch_key, entryBranch))
+                if select_key in taglist_global:
+                    sys.stderr.write('Duplicate key "%s" found in configuration for selector "%s"\n'
+                                     % (select_key, entrySelect))
                     sys.exit(-1)
 
-                taglist_global.append(branch_key)
-                self.machines_allbranches[branch_key] = MachineItem(entryTag, entryHost, entryDirPath, "")
+                taglist_global.append(select_key)
+                self.machines_allselects[select_key] = MachineItem(entryTag, entryHost, entryDirPath, "")
 
                 return
 
@@ -237,18 +237,18 @@ class Configuration:
             sys.stderr.write('Duplicate host "%s" found in configuration\n' % entryHost)
             sys.exit(-1)
 
-        # Add to list of machines for all branches
-        branch_key = "%s<>branch_sep<>%s" % (entryBranch, entryTag)
+        # Add to list of machines for all selectors
+        select_key = "%s<>select_sep<>%s" % (entrySelect, entryTag)
 
-        if branch_key in taglist_global:
-            sys.stderr.write('Duplicate key "%s" found in configuration for branch "%s"\n'
-                             % (branch_key, entryBranch))
+        if select_key in taglist_global:
+            sys.stderr.write('Duplicate key "%s" found in configuration for selector "%s"\n'
+                             % (select_key, entrySelect))
             sys.exit(-1)
 
-        taglist_global.append(branch_key)
-        self.machines_allbranches[branch_key] = MachineItem(entryTag, entryHost, entryDirPath, "")
+        taglist_global.append(select_key)
+        self.machines_allselects[select_key] = MachineItem(entryTag, entryHost, entryDirPath, "")
 
-        # Add to list of machines to process (branch-specific)
+        # Add to list of machines to process (selector-specific)
         taglist.append(entryTag)
         hostlist.append(entryHost)
         self.machines[entryHost] = MachineItem(entryTag, entryHost, entryDirPath, entryProject)
@@ -272,7 +272,7 @@ class Configuration:
     # Read and parse the configuration file
     #
     def LoadConfigurationFile(self):
-        # (Keep track of a global taglist for all branches for --initialize)
+        # (Keep track of a global taglist for all selectors for --initialize)
         taglist = []
         hostlist = []
         taglist_global = []
@@ -291,11 +291,11 @@ class Configuration:
                 if len(elements) == 2 and elements[0].strip().lower() == "host":
                     self.ParseHostEntry(elements[1].rstrip(), taglist, hostlist, taglist_global)
 
-                # Allow "branch:" to sepcify default branch to build for all builds
-                elif len(elements) == 2 and elements[0].strip().lower() == "branch":
-                    self.branch = elements[1].strip()
-                    if self.options.branch != None:
-                        self.branch = self.options.branch
+                # Allow "select:" to sepcify default selector to build for all builds
+                elif len(elements) == 2 and elements[0].strip().lower() == "select":
+                    self.select = elements[1].strip()
+                    if self.options.select != None:
+                        self.select = self.options.select
 
                 # Allow "exclude:" to specify a list of hosts to exclude
                 elif len(elements) == 2 and elements[0].strip().lower() == "exclude":
@@ -402,9 +402,9 @@ class Configuration:
 
         # Be sure we have at least one host to deal with ...
         if len(taglist) == 0:
-            if self.GetBranchSpecification() != '':
-                sys.stderr.write('No host entries found for branch \''
-                                 + self.GetBranchSpecification()
+            if self.GetSelectSpecification() != '':
+                sys.stderr.write('No host entries found for selector \''
+                                 + self.GetSelectSpecification()
                                  + '\' in pbuild configuration file\n')
             else:
                 sys.stderr.write('No host entries found in pbuild configuration file\n')
@@ -453,16 +453,16 @@ class Configuration:
         # We use complete host list rather than hosts specified on command line
         # Also, we 'cd' to base directory on host to verify that it exists
         hostsOK = True
-        for key in sorted(self.machines_allbranches.keys()):
-            (branch, tag) = key.split('<>branch_sep<>', 1)
+        for key in sorted(self.machines_allselects.keys()):
+            (select, tag) = key.split('<>select_sep<>', 1)
 
-            if branch == '':
-                print "Checking host:", self.machines_allbranches[key].GetHost()
+            if select == '':
+                print "Checking host:", self.machines_allselectss[key].GetHost()
             else:
-                print "Checking host: %s (Branch: %s)" % (self.machines_allbranches[key].GetHost(), branch)
+                print "Checking host: %s (Selector: %s)" % (self.machines_allselects[key].GetHost(), select)
 
             process = subprocess.Popen(
-                ['ssh', self.machines_allbranches[key].GetHost(), 'cd %s' % (self.machines_allbranches[key].GetPath())],
+                ['ssh', self.machines_allselects[key].GetHost(), 'cd %s' % (self.machines_allselects[key].GetPath())],
                 stdin=subprocess.PIPE
                 )
             process.wait()

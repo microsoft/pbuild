@@ -69,21 +69,21 @@ class BuildHost(threading.Thread):
         self.sActivityText = 'starting up'
         self.tActivityTime = 0
 
-        # Support for setting 'LogfileBranch'
+        # Support for setting 'LogfileSelect'
         #
-        # If 'LogfileBranch' is specified, then logfiles are named with the
-        # branch name (if a branch name is known).  This will allow several
+        # If 'LogfileSelect' is specified, then logfiles are named with the
+        # selector name (if a selector name is known).  This will allow several
         # instances of pbuild to be run concurrently against independent
-        # branches by not conflicting in the log file naming conventions.
+        # selectors by not conflicting in the log file naming conventions.
 
-        self.branchSpec = ''
+        self.selectSpec = ''
 
-        if config.GetSetting('LogfileBranch'):
-            self.branchSpec = '-None'
+        if config.GetSetting('LogfileSelect'):
+            self.selectSpec = '-None'
 
-            # If we have a branch specification, use it
-            if config.GetBranchSpecification() != '':
-               self.branchSpec = '-%s' % config.GetBranchSpecification()
+            # If we have a selector specification, use it
+            if config.GetSelectSpecification() != '':
+               self.selectSpec = '-%s' % config.GetSelectSpecification()
 
     ##
     # Build queue of operations to initialize the environment on destination
@@ -129,20 +129,11 @@ class BuildHost(threading.Thread):
             queue.append('echo')
             queue.append('echo ========================= Performing custom command')
             queue.append('echo "Command: %s"' % self.config.options.command)
+            queue.append('cd %s || exit $?' % self.path)
             queue.append(self.config.options.command)
             queue.append('EXITSTATUS=$?')
             queue.append('exit $EXITSTATUS')
             return
-
-        # Start up the TFS Proxy (tfprox) if it's not already running
-        #
-        # Note: It may be started via inetd.  If so, then it should be in the /etc/services file.
-        # If not in /etc/services file, then just try and start (harmless if already running).
-
-        if self.config.GetSetting('TFProxStart'):
-            queue.append('echo')
-            queue.append('echo ========================= Performing starting TFProxy')
-            queue.append('cat /etc/services | grep tfprox | grep 8080 || sudo /opt/tfprox/bin/tfprox -b')
 
 
     ##
@@ -151,101 +142,113 @@ class BuildHost(threading.Thread):
     # Note: "paths" should generally NOT be a list with new project-based clean mechanism
     #       (although, technically, it will work)
     #
-    def BuildQueueCleanup(self, queue, paths, cleanList):
+    def BuildQueueCleanup(self, queue):
         queue.append('')
         queue.append('echo')
-        queue.append('echo ========================= Performing tf undo / cleanup')
+        queue.append('echo ========================= Performing git cleanup')
         queue.append('date')
-        queue.append('tf undo -recursive ~/')
-        # Can't check status - 'tf undo' returns an error with nothing to undo
-        queue.append('echo The following files are being deleted:')
-        for pathDir in paths:
-            for cleanDir in cleanList:
-                queue.append('find %s/%s -type f -perm -u+w -print -exec rm {} \;' % (pathDir, cleanDir) )
-        queue.append('echo')
+        # Basic steps are:
+        #   1. git stash (in each subproject)
+        #   2. git clean -fdx (in each subproject)
+        #   3. git fetch (in each subproject)
+        queue.append('git stash')
+        queue.append('git submodule foreach git stash')
+        #
+        queue.append('git clean -fdx')
+        queue.append('git submodule foreach git clean -fdx')
+        #
+        queue.append('git fetch')
+        queue.append('git submodule foreach git fetch')
 
-    def BuildQueueCleanupProject(self, queue):
-        # Clean the project for each of the dependency projects (i.e. OMI, PAL, etc)
-        for dependency in self.projectDefs.GetDependentProjects():
-            project = ProjectFactory(dependency).Create()
-            self.BuildQueueCleanup(queue, project.GetCleanPaths(), project.GetCleanList())
-
-        # Now clean the project for the actual project itself
-        self.BuildQueueCleanup(queue, self.projectDefs.GetCleanPaths(), self.projectDefs.GetCleanList())
 
     ##
     # Build queue of operations to perform on the remote systems
     #
     def BuildQueue(self, queue):
         self.BuildQueueInitialize(queue)
-        self.BuildQueueCleanupProject(queue)
 
-        # Support handling if initial 'tf get' was not done
-        #
-        # We will retry the 'tf get' later if this wasn't needed; this ordering
-        # helps insure that old build was cleaned up with old Makefiles
-        queue.append('NEEDS_TFGET=0')
+        # If directory doesn't exist, automatically clone
+        queue.append('create_repo_clone()')
+        queue.append('{')
+        queue.append('    echo')
+        queue.append('    echo ========================= Performing git clone')
+        queue.append('    date')
+        queue.append('    echo \'Cloning project %s\'' % self.projectDefs.GetCloneSource())
+        queue.append('    mkdir -p %s' % self.path)
+        queue.append('    rm -rf %s' % self.path)
+        queue.append('    git clone --recursive %s %s || exit $?'
+                            % (self.projectDefs.GetCloneSource(), self.path))
+        queue.append('    DID_WE_CLONE=1')
+        queue.append('}')
+        queue.append('DID_WE_CLONE=0')
         queue.append('')
-        queue.append('if [ ! -d %s ]; then' % self.projectDefs.GetSourceDirectory())
-        queue.append('  echo')
-        queue.append('  echo ========================= Performing initial tf get')
-        queue.append('  date')
-        queue.append('  tf get')
-        queue.append('  EXITSTATUS=$?')
-        queue.append('  [ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
-        queue.append('  echo')
-        queue.append('else')
-        queue.append('  NEEDS_TFGET=1')
+        queue.append('if [ ! -d %s -o ! -d %s/.git ]; then' % (self.path, self.path))
+        queue.append('    create_repo_clone')
+
+        if self.config.options.clone:
+            queue.append('else')
+            queue.append('    create_repo_clone')
+
         queue.append('fi')
 
-        # Now generate the remainder of the command script
+        # Change into the user directory for build purposes (it better exist by now!)
+        queue.append('cd %s || exit $?' % self.path)
+
+        # Verify that the clone operation gave us bits where we expect them to be
         queue.append('if [ ! -d %s ]; then' % self.projectDefs.GetSourceDirectory())
         queue.append('  echo "Error: \'%s\' subdirectory does not exist!"' % self.projectDefs.GetBuildDirectory())
         queue.append('  exit -1')
         queue.append('fi')
-        queue.append('BASE_DIRECTORY=`pwd -P`')
-        queue.append('cd %s || exit $?' % self.projectDefs.GetBuildDirectory())
 
-        queue.append('')
-        queue.append('echo')
-        queue.append('echo ========================= Performing make distclean')
-        queue.append('date')
-        queue.append('chmod ug+x ./configure; ./configure')
-        queue.append('make distclean')
-        queue.append('echo')
-
-        queue.append('')
-        queue.append('if [ ${NEEDS_TFGET} -ne 0 ]; then')
-        queue.append('  echo')
-        queue.append('  echo ========================= Performing tf get')
-        queue.append('  date')
-        queue.append('  tf get')
-        queue.append('  EXITSTATUS=$?')
-        queue.append('  [ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
-        queue.append('  echo')
+        # We only need to clean up the repo if we didn't just clone it ...
+        queue.append('if [ $DID_WE_CLONE -eq 0 ]; then')
+        self.BuildQueueCleanup(queue)
         queue.append('fi')
 
-        if self.config.options.shelveset:
-            shelvesetList = self.config.options.shelveset.split(',')
-            queue.append('')
-            queue.append('echo')
-            queue.append('echo ========================= Performing tf unshelve')
-            queue.append('date')
-            for shelveset in shelvesetList:
-                queue.append('echo \'Unshelving shelveset: %s\'' % shelveset)
-                queue.append('tf unshelve "%s"' % shelveset)
-                queue.append('EXITSTATUS=$?')
-                queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
-            queue.append('echo')
+        # One way or another, we have a clean repository, so get it in a known state:
+        #
+        #   1. git checkout origin/master (in each subproject)
+        #   2. Apply --branch and --subproject as needed
 
-        # Clean again - in case the shelveset - or tf get - fixed up clean code
         queue.append('')
         queue.append('echo')
-        queue.append('echo ========================= Performing make distclean')
+        queue.append('echo ========================= Performing git checkout origin/master')
         queue.append('date')
-        queue.append('chmod ug+x ./configure; ./configure')
-        queue.append('make distclean')
-        queue.append('echo')
+        queue.append('git checkout origin/master')
+        queue.append('git submodule foreach git checkout origin/master')
+
+        if self.config.options.branch:
+            queue.append('')
+            queue.append('echo')
+            queue.append('echo ========================= Performing git checkout %s' % self.config.options.branch)
+            queue.append('date')
+            queue.append('# Applying branch \'%s\' to project' % self.config.options.branch)
+            queue.append('git checkout %s || exit $?' % self.config.options.branch)
+
+        if self.config.options.subproject:
+            subprojectList = self.config.options.subproject.split(',')
+            queue.append('')
+            queue.append('echo')
+            queue.append('echo ========================= Performing git checkout')
+            queue.append('date')
+            for subproject in subprojectList:
+                # Subproject spec looks like: <dir>:<branch>
+                subprojectElements = subproject.split(':')
+                queue.append('echo \'Applying branch %s to subproject %s\'' % (subprojectElements[1], subprojectElements[0]))
+                queue.append('if [ ! -d "%s" ]; then' % subprojectElements[0])
+                queue.append('    echo "Directory %s not found for subproject spec %s"' % (subprojectElements[0], subproject))
+                queue.append('    exit 1')
+                queue.append('fi')
+                queue.append('cd %s || exit $?' % subprojectElements[0])
+                queue.append('git checkout %s || exit $?' % subprojectElements[1])
+                queue.append('cd %s || exit $?' % self.path)
+            queue.append('echo')
+
+        # Get ready to build
+
+        queue.append('cd %s || exit $?' % self.projectDefs.GetBuildDirectory())
+
+        # Now generate the remainder of the command script
 
         queue.append('')
         queue.append('echo')
@@ -306,15 +309,6 @@ class BuildHost(threading.Thread):
         queue.append('echo')
         queue.append('echo Ending at:  `date`')
 
-        # Only clean up if the make was successful and we unshelved something
-        if not self.config.options.nocleanup and self.config.options.shelveset:
-            queue.append('')
-            queue.append('if [ $EXITSTATUS = 0 ]; then')
-            queue.append('cd $BASE_DIRECTORY')
-            self.BuildQueueCleanupProject(queue)
-            queue.append('fi')
-            queue.append('')
-
     ##
     # Perform a build on a remote system (execute the command script already copied).
     #
@@ -327,12 +321,12 @@ class BuildHost(threading.Thread):
         else:
             activeStr = ''
 
-        outfname = '%s%s%s%s.log' % (self.logPrefix, activeStr, self.tag, self.branchSpec)
+        outfname = '%s%s%s%s.log' % (self.logPrefix, activeStr, self.tag, self.selectSpec)
 
         if self.deleteLogfiles:
             for prefix in [ '', 'active-', 'done-', 'failed-' ]:
                 try:
-                    os.remove('%s%s%s%s.log' % (self.logPrefix, prefix, self.tag, self.branchSpec))
+                    os.remove('%s%s%s%s.log' % (self.logPrefix, prefix, self.tag, self.selectSpec))
                 except OSError:
                     # If the file doesn't exist, that's fine
                     pass
@@ -351,7 +345,7 @@ class BuildHost(threading.Thread):
             outf = open(outfname, 'a+', 1)
 
             self.process = subprocess.Popen(
-                ['ssh', self.hostname, 'chmod 755 ' + self.destinationName + '; bash ' + self.destinationName],
+                ['ssh', '-A', self.hostname, 'chmod 755 ' + self.destinationName + '; bash ' + self.destinationName],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT
@@ -398,7 +392,7 @@ class BuildHost(threading.Thread):
             else:
                 completionStr = 'failed-'
 
-            newfname = '%s%s%s%s.log' % (self.logPrefix, completionStr, self.tag, self.branchSpec)
+            newfname = '%s%s%s%s.log' % (self.logPrefix, completionStr, self.tag, self.selectSpec)
             os.rename(outfname, newfname)
 
     ##
@@ -428,8 +422,7 @@ class BuildHost(threading.Thread):
 
         self.queue.insert(2, 'echo "Executing on host $HOSTNAME (%(TAG)s: %(HOST)s)"' \
                               % {'TAG' : self.tag, 'HOST' : self.hostname } )
-        self.queue.insert(3, 'cd %s || exit $?' % self.path)
-        self.queue.insert(4, '')
+        self.queue.insert(3, '')
 
         # We assume that $EXITSTATUS was previously set by project-specific queue code
         self.queue.append('echo ========================= Performing Finishing up\; status=$EXITSTATUS')
@@ -479,7 +472,7 @@ class BuildHost(threading.Thread):
             else:
                 completionStr = ''
 
-            outfname = '%s%s%s%s.log' % (self.logPrefix, completionStr, self.tag, self.branchSpec)
+            outfname = '%s%s%s%s.log' % (self.logPrefix, completionStr, self.tag, self.selectSpec)
             outf = open(outfname, 'w+')
             outf.write("ERROR: SCP process did not properly copy script for host: %s\n" % self.hostname)
             outf.close()
@@ -585,7 +578,7 @@ class Builder:
         # Verify that our screen is large enough.  Account for:
         #    . Three blank lines (after header, after host list, and before elapsed time)
         #    . "Host Count"
-        #    . "Branch"
+        #    . "Selector"
         #    . "Command Line" * 2
         #    . "Elapsed Time"
         #    . A "home" line for the cursor
@@ -623,9 +616,9 @@ class Builder:
         stdscr.addstr(lastLine, 15, '%d' % hostCount)
 
         lastLine = lastLine + 1
-        stdscr.addstr(lastLine, 0, 'Branch:')
-        if self.config.GetBranchSpecification() != '':
-            stdscr.addstr(lastLine, 15, self.config.GetBranchSpecification())
+        stdscr.addstr(lastLine, 0, 'Selector:')
+        if self.config.GetSelectSpecification() != '':
+            stdscr.addstr(lastLine, 15, self.config.GetSelectSpecification())
         else:
             stdscr.addstr(lastLine, 15, '<None>')
 
