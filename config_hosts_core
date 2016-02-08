@@ -1,58 +1,45 @@
+# Operations Manager
 
-# Mainline
-host:	aix_5.3		scxaix3-1		~/dev/main/opsmgr	om-main	om
-host:	aix_6.1		scxaix1			~/dev/main/opsmgr	om-main	om
-host:	aix_7.1		scxomd-aix7-01		~/dev/main/opsmgr	om-main	om
-host:	centos_5_32	ostcdev-cent5-01	~/dev/main/opsmgr	om-main om
-host:	centos_5_64	scxomd64-cent5-01	~/dev/main/opsmgr	om-main	om
-host:	debian_5_32	scxomd-deb5-01		~/dev/main/opsmgr	om-main	om
-host:	debian_5_64	scxomd64-deb5-01	~/dev/main/opsmgr	om-main	om
-host:	hp_v2_ia64	ostcdevia-hp23-01	~/dev/main/opsmgr	om-main	om
-host:	hp_v2_risc	scxhpr3			~/dev/main/opsmgr	om-main	om
-host:	hp_v3_ia64	scxhpv3-11		~/dev/main/opsmgr	om-main	om
-host:	hp_v3_risc	scxrrhpr11		~/dev/main/opsmgr	om-main	om
-host:	redhat_4_32	ostcdev-rhel4-10	~/dev/main/opsmgr	om-main	om
-host:	redhat_4_64	ostcdev64-rhel4-10	~/dev/main/opsmgr	om-main	om
-host:	redhat_5_32	ostcdev-rhel5-01	~/dev/main/opsmgr	om-main	om
-host:	redhat_5_64	ostcdev64-rhel5-01	~/dev/main/opsmgr	om-main	om
-host:	redhat_6_32	scxcrd-rhe6-01		~/dev/main/opsmgr	om-main	om
-host:	redhat_6_64	scxcrd64-rhel6-01	~/dev/main/opsmgr	om-main	om
-host:	sun_5.9_sparc	ostcdev-sparc9-01	~/dev/main/opsmgr	om-main	om
-host:	sun_5.10_sparc	scxsun12		~/dev/main/opsmgr	om-main	om
-host:	sun_5.10_x86	scxcrd-sol10-01		~/dev/main/opsmgr	om-main	om	# jeffcof
-host:	sun_5.11_sparc	scxdev-sparc11-01	~/dev/main/opsmgr	om-main	om
-host:	sun_5.11_x86	scxdev86-sol11-01	~/dev/main/opsmgr	om-main	om
-host:	suse_09_32	ostcdev-sles9-10	~/dev/main/opsmgr	om-main	om
-host:	suse_10_32	ostcdev-sles10-01	~/dev/main/opsmgr	om-main	om	# jeffcof
-host:	suse_10_64	ostcdev64-sles10-01	~/dev/main/opsmgr	om-main	om	# jeffcof
-host:	suse_11_32	ostcdev-sles11-01	~/dev/main/opsmgr	om-main	om
-host:	suse_11_64	ostcdev64-sles11-01	~/dev/main/opsmgr	om-main	om
+host:	aix_6.1		ostcdev-aix61-01	~/dev/bld-scxcore	om
+host:	aix_7.1		ostcdev-aix71-01	~/dev/bld-scxcore	om
+host:	hp_v3_ia64	scxhpv3-11		~/dev/bld-scxcore	om
+host:	hp_v3_risc	scxrrhpr12		~/dev/bld-scxcore	om
+host:	sun_5.10_sparc	ostcdev-sparc10-15	~/dev/bld-scxcore	om
+host:	sun_5.10_x86	ostcdev-sol10-01	~/dev/bld-scxcore	om	# jeffcof
+host:	sun_5.11_sparc	ostcdev-sparc11-10	~/dev/bld-scxcore	om
+host:	sun_5.11_x86	ostcdev-sol11-01	~/dev/bld-scxcore	om
+host:	suse_10_32	ostcdev-sles10-01	~/dev/bld-scxcore	om	# jeffcof
+host:	suse_10_64	ostcdev64-sles10-01	~/dev/bld-scxcore	om	# jeffcof
 
-# Working Branch
-host:	aix_5.3		scxaix3-1		~/dev/work/opsmgr	om-work	om
-host:	aix_6.1		scxaix1			~/dev/work/opsmgr	om-work	om
-host:	aix_7.1		scxomd-aix7-01		~/dev/work/opsmgr	om-work	om
-host:	centos_5_32	ostcdev-cent5-01	~/dev/work/opsmgr	om-work om
-host:	centos_5_64	scxomd64-cent5-01	~/dev/work/opsmgr	om-work	om
-host:	debian_5_32	scxomd-deb5-01		~/dev/work/opsmgr	om-work	om
-host:	debian_5_64	scxomd64-deb5-01	~/dev/work/opsmgr	om-work	om
-host:	hp_v2_ia64	ostcdevia-hp23-01	~/dev/work/opsmgr	om-work	om
-host:	hp_v2_risc	scxhpr3			~/dev/work/opsmgr	om-work	om
-host:	hp_v3_ia64	scxhpv3-11		~/dev/work/opsmgr	om-work	om
-host:	hp_v3_risc	scxrrhpr11		~/dev/work/opsmgr	om-work	om
-host:	redhat_4_32	ostcdev-rhel4-10	~/dev/work/opsmgr	om-work	om
-host:	redhat_4_64	ostcdev64-rhel4-10	~/dev/work/opsmgr	om-work	om
-host:	redhat_5_32	ostcdev-rhel5-01	~/dev/work/opsmgr	om-work	om
-host:	redhat_5_64	ostcdev64-rhel5-01	~/dev/work/opsmgr	om-work	om
-host:	redhat_6_32	scxcrd-rhe6-01		~/dev/work/opsmgr	om-work	om
-host:	redhat_6_64	scxcrd64-rhel6-01	~/dev/work/opsmgr	om-work	om
-host:	sun_5.9_sparc	ostcdev-sparc9-01	~/dev/work/opsmgr	om-work	om
-host:	sun_5.10_sparc	scxsun12		~/dev/work/opsmgr	om-work	om
-host:	sun_5.10_x86	scxcrd-sol10-01		~/dev/work/opsmgr	om-work	om
-host:	sun_5.11_sparc	scxdev-sparc11-01	~/dev/work/opsmgr	om-work	om
-host:	sun_5.11_x86	scxdev86-sol11-01	~/dev/work/opsmgr	om-work	om
-host:	suse_09_32	ostcdev-sles9-10	~/dev/work/opsmgr	om-work	om
-host:	suse_10_32	ostcdev-sles10-01	~/dev/work/opsmgr	om-work	om
-host:	suse_10_64	ostcdev64-sles10-01	~/dev/work/opsmgr	om-work	om
-host:	suse_11_32	ostcdev-sles11-01	~/dev/work/opsmgr	om-work	om
-host:	suse_11_64	ostcdev64-sles11-01	~/dev/work/opsmgr	om-work	om
+#
+# Apache Project
+#
+
+host:	suse_10_32	ostcdev-sles10-01	~/dev/bld-apache	apache
+host:	suse_10_64	ostcdev64-sles10-01	~/dev/bld-apache	apache
+
+#
+# MySQL Project
+#
+
+host:	suse_10_32	ostcdev-sles10-01	~/dev/bld-mysql		mysql
+host:	suse_10_64	ostcdev64-sles10-01	~/dev/bld-mysql		mysql
+
+#
+# OMS Project
+#
+
+host:	cent_5_32	ostcdev-cent5-01	~/dev/bld-omsagent	oms
+host:	cent_5_64	ostcdev64-cent5-01	~/dev/bld-omsagent      oms
+
+#
+# OMI Project
+#
+
+host:	centos_7_64_p	jeffcof64-cent7x-01	~/dev/omi		omi
+
+#
+# PAL Project
+#
+
+host:	centos_7_64_p	jeffcof64-cent7x-01	~/dev/pal		pal

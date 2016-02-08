@@ -19,18 +19,13 @@
 
 #
 # Default selector to build if unspecified on command line.
-# With no customization, you get:  ""  (no selector).
-#
-# If no default selector is defined, and no selector is specified on the command
-# line, then no host entries may contain select specifications (for backwards
-# compatibility, or to insist that a selector is specified).
 #
 # NOTE: This line must appear before all host entries to be handled properly!
 #
 # You can customize with a line like the following:
-# select: main
+# select: om
 
-select: main
+select: om
 
 #
 # Systems to exclude in the build:
@@ -74,11 +69,12 @@ select: main
 #   Key (name for referring to the entry)
 #   Host name (DNS name or IP address)
 #   Directory path on host
-#   Optional: Select specification (to match with command line and/or default)
-#   Optional: Project (must specify selector to specify project)
+#   Project (must specify selector to specify project)
 #      Project must be one of:
-#         om (for Operations Manager)
-#         cm (for Configuration Manager), or
+#         om (for Operations Manager),
+#         oms (for Operatations Management Suite), or
 #         a host of others (see documentation)
-#      If not specified, will default to om
-
+#   Optional: Select specification (to match with command line and/or default)
+#      If a select entry is specified, you MUST specify a selector to build with
+#      This is useful if you build multiple projects. If you only build one
+#      project, then you need not specify the select specification.

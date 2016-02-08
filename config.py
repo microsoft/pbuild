@@ -181,7 +181,7 @@ class Configuration:
     #
     # Host entries can be of the following format:
     #
-    # host: tag  host  directory  selector  project
+    # host: tag  host  directory  project  [selector]
     #
     # Note: "host:" tag is removed before we're called.
 
@@ -191,21 +191,26 @@ class Configuration:
         entryTag = ""
         entryHost = ""
         entryDirPath = ""
-        entrySelect = ""
         entryProject = ""
+        entrySelect = ""
 
-        # Was both a selector and project specified on this host entry?
-        if len(elements) == 5:
-            if self.GetSelectSpecification() == '':
-                sys.stderr.write('No selector specified - select specification is required for host entry - offending line:\n'
-                                 + '\'' + line.rstrip() + '\'\n')
-                sys.exit(-1)
-
+        # Do we have the correct number of entries
+        if len(elements) == 4 or len(elements) == 5:
             entryTag = elements[0].lower()
             entryHost = elements[1]
             entryDirPath = elements[2]
-            entrySelect = elements[3]
-            entryProject = elements[4].lower()
+            entryProject = elements[3].lower()
+
+            # Was both a project and selector specified on this host entry?
+            if len(elements) == 5:
+                entrySelect = elements[4]
+
+                if self.GetSelectSpecification() == '':
+                    sys.stderr.write('No selector specified - select specification is required for host entry - offending line:\n'
+                                     + '\'' + line.rstrip() + '\'\n')
+                    sys.exit(-1)
+            else:
+                entrySelect = entryProject
 
             # Validate the project name
             if not self.VerifyProjectName(entryProject):
@@ -400,6 +405,11 @@ class Configuration:
         if self.GetLogfilePriorPrefix() != '':
             self.VerifyLogdirWritable(self.GetLogfilePriorPrefix())
 
+        # No select: tag specified, and no --select qualifier
+        if len(self.select) == 0:
+            sys.stderr.write('No --select on command line and no \'select:\' tag in configuration\n')
+            sys.exit(-1)
+
         # Be sure we have at least one host to deal with ...
         if len(taglist) == 0:
             if self.GetSelectSpecification() != '':
@@ -407,7 +417,7 @@ class Configuration:
                                  + self.GetSelectSpecification()
                                  + '\' in pbuild configuration file\n')
             else:
-                sys.stderr.write('No host entries found in pbuild configuration file\n')
+                sys.stderr.write('No matching host entries found in pbuild configuration file\n')
 
             sys.exit(-1)
 
