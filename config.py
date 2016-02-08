@@ -560,14 +560,12 @@ class Configuration:
         # GitHub API, and that doesn't seem worth it right now.
 
         if self.options.subproject:
-            # Get the list of machnines we're actually going to build with
+            # Get the list of machines we're actually going to build with
             machineList = [ ]
             if len(self.machineKeys):
-                for entry in sorted(self.machineKeys):
-                    machineList.append(entry)
+                machineList = sorted(self.machineKeys)
             else:
-                for key in sorted(self.machines.keys()):
-                    machineList.append(key)
+                machineList = sorted(self.machines.keys())
 
             # We're probably building just one project, but in case we are not,
             # validate the subproject list with every machine we're building.
@@ -581,11 +579,11 @@ class Configuration:
                 subprojectList = self.options.subproject.split(',')
                 for subproject in subprojectList:
                     # Subproject spec looks like: <dir>:<branch>
-                    subprojectElements = subproject.split(':')
+                    subproject_dir, subproject_branch = subproject.split(':')
 
-                    if not project.ValidateSubproject(subprojectElements[0]):
+                    if not project.ValidateSubproject(subproject_dir):
                         sys.stderr.write('Invalid subproject \'%s\' for project \'%s\'\n'
-                                         % (subprojectElements[0], projectName) )
+                                         % (subproject_dir, projectName) )
                         sys.exit(-1)
 
         # Okay, we're done.  State of the world:

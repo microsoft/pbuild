@@ -223,18 +223,20 @@ class BuildHost(threading.Thread):
             subprojectList = self.config.options.subproject.split(',')
             queue.append('')
             queue.append('echo')
-            queue.append('echo ========================= Performing git checkout')
+            queue.append('echo ========================= Performing Applying --subproject qualifier')
             queue.append('date')
             for subproject in subprojectList:
                 # Subproject spec looks like: <dir>:<branch>
-                subprojectElements = subproject.split(':')
-                queue.append('echo \'Applying branch %s to subproject %s\'' % (subprojectElements[1], subprojectElements[0]))
-                queue.append('if [ ! -d "%s" ]; then' % subprojectElements[0])
-                queue.append('    echo "Directory %s not found for subproject spec %s"' % (subprojectElements[0], subproject))
+                subproject_dir, subproject_branch = subproject.split(':')
+                queue.append('echo "Applying branch \'%s\' to subproject \'%s\'"'
+                             % (subproject_branch, subproject_dir))
+                queue.append('if [ ! -d "%s" ]; then' % subproject_dir)
+                queue.append('    echo "Directory \'%s\' not found for subproject spec \'%s\'"'
+                             % (subproject_dir, subproject))
                 queue.append('    exit 1')
                 queue.append('fi')
-                queue.append('cd %s || exit $?' % subprojectElements[0])
-                queue.append('git checkout %s || exit $?' % subprojectElements[1])
+                queue.append('cd %s || exit $?' % subproject_dir)
+                queue.append('git checkout %s || exit $?' % subproject_branch)
                 queue.append('cd %s || exit $?' % self.path)
             queue.append('echo')
 
