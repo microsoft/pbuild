@@ -540,6 +540,44 @@ class Configuration:
                 if key in self.machineKeys and fAllHosts:
                     self.machineKeys.remove(key)
 
+        # Verify if the subproject list is sensical for selected hosts
+        # We validate based on the machines, we're actually building with
+        # (either the ones specified at launch, or all of the machines in configuraiton)
+        #
+        # Note that we can only validate the subproject name, not the branch.
+        # That is, a subproject looks like: "<dir>:<branch>". We are validating
+        # the <dir>. To validate the <branch>, we would need to integrate with
+        # GitHub API, and that doesn't seem worth it right now.
+
+        if self.options.subproject:
+            # Get the list of machnines we're actually going to build with
+            machineList = [ ]
+            if len(self.machineKeys):
+                for entry in sorted(self.machineKeys):
+                    machineList.append(entry)
+            else:
+                for key in sorted(self.machines.keys()):
+                    machineList.append(key)
+
+            # We're probably building just one project, but in case we are not,
+            # validate the subproject list with every machine we're building.
+
+            for entry in machineList:
+                projectName = self.machines[entry].GetProject()
+                factory = ProjectFactory(projectName)
+                assert factory.Validate()
+                project = factory.Create()
+
+                subprojectList = self.options.subproject.split(',')
+                for subproject in subprojectList:
+                    # Subproject spec looks like: <dir>:<branch>
+                    subprojectElements = subproject.split(':')
+
+                    if not project.ValidateSubproject(subprojectElements[0]):
+                        sys.stderr.write('Invalid subproject \'%s\' for project \'%s\'\n'
+                                         % (subprojectElements[0], projectName) )
+                        sys.exit(-1)
+
         # Okay, we're done.  State of the world:
         #
         # If self.machineKeys is empty, then all machines should be processed

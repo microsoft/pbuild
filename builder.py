@@ -194,12 +194,6 @@ class BuildHost(threading.Thread):
         # Change into the user directory for build purposes (it better exist by now!)
         queue.append('cd %s || exit $?' % self.path)
 
-        # Verify that the clone operation gave us bits where we expect them to be
-        queue.append('if [ ! -d %s ]; then' % self.projectDefs.GetSourceDirectory())
-        queue.append('  echo "Error: \'%s\' subdirectory does not exist!"' % self.projectDefs.GetBuildDirectory())
-        queue.append('  exit -1')
-        queue.append('fi')
-
         # We only need to clean up the repo if we didn't just clone it ...
         queue.append('if [ $DID_WE_CLONE -eq 0 ]; then')
         self.BuildQueueCleanup(queue)

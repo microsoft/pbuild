@@ -51,10 +51,9 @@ class Project:
     def __init__(self):
         self.buildDirectory = ""
         self.cloneSource = ""
-        self.dependentProjects = [ ]
+        self.subProjects = []
         self.makeDependencies = False
         self.projectName = ""
-        self.sourceDirectory = ""
         self.targets = []
 
     ##
@@ -76,6 +75,15 @@ class Project:
         return self.cloneSource
 
     ##
+    # Is the subproject (passed in) valid for this project?
+    #
+    def ValidateSubproject(self, sub):
+        if sub.lower() in self.subProjects:
+            return True
+        else:
+            return False
+
+    ##
     # Does the project require a separate 'make depend' step?
     #
     def GetMakeDependencies(self):
@@ -86,14 +94,6 @@ class Project:
     #
     def GetProjectName(self):
         return self.projectName.lower()
-
-    ##
-    # Directory where sources are stored. This is only used to verify if we
-    # must initially fetch all files from source control, and can be any
-    # directory under source control for the project.
-    #
-    def GetSourceDirectory(self):
-        return self.sourceDirectory
 
     ##
     # Get the default list of targets to build (make <targets>)
@@ -111,9 +111,9 @@ class ProjectApache(Project):
     def __init__(self):
         self.buildDirectory = "apache/build"
         self.cloneSource = "git@github.com:Microsoft/Build-Apache-Provider.git"
+        self.subProjects = ["apache", "omi", "pal"]
         self.makeDependencies = False
         self.projectName = "apache"
-        self.sourceDirectory = "apache/source"
         self.targets = "all test"
 
 class ProjectMySQL(Project):
@@ -122,9 +122,9 @@ class ProjectMySQL(Project):
     def __init__(self):
         self.buildDirectory = "mysql/build"
         self.cloneSource = "git@github.com:Microsoft/Build-MySQL-Provider.git"
+        self.subProjects = ["mysql", "omi", "pal"]
         self.makeDependencies = False
         self.projectName = "mysql"
-        self.sourceDirectory = "mysql/source"
         self.targets = "all test"
 
 class ProjectOM(Project):
@@ -133,9 +133,9 @@ class ProjectOM(Project):
     def __init__(self):
         self.buildDirectory = "opsmgr/build"
         self.cloneSource = "git@github.com:Microsoft/Build-SCXcore.git"
+        self.subProjects = ["omi", "opsmgr", "pal"]
         self.makeDependencies = False
         self.projectName = "om"
-        self.sourceDirectory = "opsmgr/source"
         self.targets = "all test"
 
 class ProjectOMI(Project):
@@ -144,9 +144,9 @@ class ProjectOMI(Project):
     def __init__(self):
         self.buildDirectory = "Unix"
         self.cloneSource = "git@github.com:Microsoft/omi.git"
+        self.subProjects = [ ]
         self.makeDependencies = False
         self.projectName = "omi"
-        self.sourceDirectory = "Unix"
         self.targets = "all"
 
 class ProjectOMS(Project):
@@ -155,9 +155,9 @@ class ProjectOMS(Project):
     def __init__(self):
         self.buildDirectory = "omsagent/build"
         self.cloneSource = "git@github.com:Microsoft/Build-OMS-Agent-for-Linux.git"
+        self.subProjects = ["dsc", "omi", "omsagent", "opsmgr", "pal"]
         self.makeDependencies = False
         self.projectName = "oms"
-        self.sourceDirectory = "omsagent/source"
         self.targets = "all"
 
 class ProjectPAL(Project):
@@ -166,8 +166,8 @@ class ProjectPAL(Project):
     def __init__(self):
         self.buildDirectory = "build"
         self.cloneSource = "git@github.com:Microsoft/pal.git"
+        self.subProjects = [ ]
         self.makeDependencies = False
         self.projectName = "pal"
-        self.sourceDirectory = "source"
         self.targets = "all test"
 
