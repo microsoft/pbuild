@@ -9,7 +9,7 @@
 #
 
 import os
-from stat import *
+import stat
 from project import *
 import subprocess
 import sys
@@ -445,7 +445,7 @@ class Configuration:
             initStat = os.stat(initFilename)
             configStat = os.stat(self.GetConfigurationFilename())
 
-            if configStat[ST_MTIME] < initStat[ST_MTIME]:
+            if configStat[stat.ST_MTIME] < initStat[stat.ST_MTIME]:
                 pbuildInitialized = True
         except OSError:
             pass
@@ -460,6 +460,14 @@ class Configuration:
             # If the file doesn't exist, that's fine
             pass
 
+
+        # We only need to check each machine once (not per project).
+        # Thus, build a set of unique hostnames
+        uniqueHosts = set()
+        for key in self.machines_allselects.keys():
+            host = self.machines_allselects[key].GetHost()
+            uniqueHosts.add(host)
+
         # We use complete host list rather than hosts specified on command line
         # Using git doesn't require pre-setup as such (other than public/private
         # key to the host machine), but it DOES require an entry in .known_hosts
@@ -470,17 +478,12 @@ class Configuration:
         #   2) Use grep to see if github.com is known in .known_hosts
         #   3) If not, issue ssh command to add entry to .known_hosts
         hostsOK = True
-        for key in sorted(self.machines_allselects.keys()):
-            (select, tag) = key.split('<>select_sep<>', 1)
-
-            if select == '':
-                print "Checking host:", self.machines_allselectss[key].GetHost()
-            else:
-                print "Checking host: %s (Selector: %s)" % (self.machines_allselects[key].GetHost(), select)
+        for host in sorted(uniqueHosts):
+            print "Checking host:", host
 
             process = subprocess.Popen(
                 [
-                    'ssh', '-A', self.machines_allselects[key].GetHost(),
+                    'ssh', '-A', host,
                     'grep github.com, ~/.ssh/known_hosts > /dev/null 2> /dev/null || ssh -o StrictHostKeyChecking=no -o HashKnownHosts=no -T git@github.com'
                 ],
                 stdin=subprocess.PIPE
