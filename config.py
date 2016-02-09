@@ -9,7 +9,7 @@
 #
 
 import os
-import stat
+from stat import *
 from project import *
 import subprocess
 import sys
@@ -461,7 +461,14 @@ class Configuration:
             pass
 
         # We use complete host list rather than hosts specified on command line
-        # Also, we 'cd' to base directory on host to verify that it exists
+        # Using git doesn't require pre-setup as such (other than public/private
+        # key to the host machine), but it DOES require an entry in .known_hosts
+        # to not require a prompt.
+        #
+        # Algorithm:
+        #   1) Connect to the machine in question with SSH auth forwarding
+        #   2) Use grep to see if github.com is known in .known_hosts
+        #   3) If not, issue ssh command to add entry to .known_hosts
         hostsOK = True
         for key in sorted(self.machines_allselects.keys()):
             (select, tag) = key.split('<>select_sep<>', 1)
@@ -472,7 +479,10 @@ class Configuration:
                 print "Checking host: %s (Selector: %s)" % (self.machines_allselects[key].GetHost(), select)
 
             process = subprocess.Popen(
-                ['ssh', self.machines_allselects[key].GetHost(), 'cd %s' % (self.machines_allselects[key].GetPath())],
+                [
+                    'ssh', '-A', self.machines_allselects[key].GetHost(),
+                    'grep github.com, ~/.ssh/known_hosts > /dev/null 2> /dev/null || ssh -o StrictHostKeyChecking=no -o HashKnownHosts=no -T git@github.com'
+                ],
                 stdin=subprocess.PIPE
                 )
             process.wait()
