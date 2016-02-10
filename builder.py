@@ -167,6 +167,13 @@ class BuildHost(threading.Thread):
     def BuildQueue(self, queue):
         self.BuildQueueInitialize(queue)
 
+        # Normally done by 'pbuild --init', but verify in case --init disabled
+        queue.append('')
+        queue.append('echo')
+        queue.append('echo ========================= Performing git validation')
+        queue.append('date')
+        queue.append('grep github.com, ~/.ssh/known_hosts > /dev/null 2> /dev/null || ssh -o StrictHostKeyChecking=no -o HashKnownHosts=no -T git@github.com')
+
         # If directory doesn't exist, automatically clone
         queue.append('create_repo_clone()')
         queue.append('{')
