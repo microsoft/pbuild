@@ -149,16 +149,11 @@ class BuildHost(threading.Thread):
         queue.append('date')
         # Basic steps are:
         #   1. git stash (in each subproject)
-        #   2. git clean -fdx (in each subproject)
-        #   3. git fetch (in each subproject)
+        #   2. git fetch (in each subproject)
         queue.append('git stash')
         queue.append('git submodule foreach git stash')
         #
-        queue.append('git clean -fdx')
-        queue.append('git submodule foreach git clean -fdx')
-        #
-        queue.append('git fetch')
-        queue.append('git submodule foreach git fetch')
+        queue.append('git fetch --recurse-submodules')
 
 
     ##
@@ -246,6 +241,16 @@ class BuildHost(threading.Thread):
                 queue.append('git checkout origin/%s || exit $?' % subproject_branch)
                 queue.append('cd %s || exit $?' % self.path)
             queue.append('echo')
+
+        # Clean up the repostories of any existing (unnecessary files)
+        # We do this step here to properly handle any changes to .gitignore
+
+        queue.append('')
+        queue.append('echo')
+        queue.append('echo ========================= Performing git clean')
+        queue.append('date')
+        queue.append('git clean -fdx')
+        queue.append('git submodule foreach git clean -fdx')
 
         # Get ready to build
 
