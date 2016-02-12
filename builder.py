@@ -221,10 +221,10 @@ class BuildHost(threading.Thread):
         if self.config.options.branch:
             queue.append('')
             queue.append('echo')
-            queue.append('echo ========================= Performing git checkout %s' % self.config.options.branch)
+            queue.append('echo ========================= Performing Applying --branch qualifier')
             queue.append('date')
-            queue.append('# Applying branch \'%s\' to project' % self.config.options.branch)
-            queue.append('git checkout %s || exit $?' % self.config.options.branch)
+            queue.append('# Applying branch \'origin/%s\' to project' % self.config.options.branch)
+            queue.append('git checkout origin/%s || exit $?' % self.config.options.branch)
 
         if self.config.options.subproject:
             subprojectList = self.config.options.subproject.split(',')
@@ -235,7 +235,7 @@ class BuildHost(threading.Thread):
             for subproject in subprojectList:
                 # Subproject spec looks like: <dir>:<branch>
                 subproject_dir, subproject_branch = subproject.split(':')
-                queue.append('echo "Applying branch \'%s\' to subproject \'%s\'"'
+                queue.append('echo "Applying branch \'origin/%s\' to subproject \'%s\'"'
                              % (subproject_branch, subproject_dir))
                 queue.append('if [ ! -d "%s" ]; then' % subproject_dir)
                 queue.append('    echo "Directory \'%s\' not found for subproject spec \'%s\'"'
@@ -243,7 +243,7 @@ class BuildHost(threading.Thread):
                 queue.append('    exit 1')
                 queue.append('fi')
                 queue.append('cd %s || exit $?' % subproject_dir)
-                queue.append('git checkout %s || exit $?' % subproject_branch)
+                queue.append('git checkout origin/%s || exit $?' % subproject_branch)
                 queue.append('cd %s || exit $?' % self.path)
             queue.append('echo')
 
