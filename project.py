@@ -51,6 +51,7 @@ class Project:
     def __init__(self):
         self.buildDirectory = ""
         self.cloneSource = ""
+        self.configureQuals = ""
         self.subProjects = []
         self.makeDependencies = False
         self.projectName = ""
@@ -73,6 +74,12 @@ class Project:
     #
     def GetCloneSource(self):
         return self.cloneSource
+
+    ##
+    # Get the configure qualifiers to run the configure script with
+    #
+    def GetConfigureQualifiers(self):
+        return self.configureQuals
 
     ##
     # Is the subproject (passed in) valid for this project?
@@ -155,6 +162,7 @@ class ProjectOMS(Project):
     def __init__(self):
         self.buildDirectory = "omsagent/build"
         self.cloneSource = "git@github.com:Microsoft/Build-OMS-Agent-for-Linux.git"
+        self.configureQuals = "--enable-ulinux"
         self.subProjects = ["dsc", "omi", "omsagent", "opsmgr", "pal"]
         self.makeDependencies = False
         self.projectName = "oms"

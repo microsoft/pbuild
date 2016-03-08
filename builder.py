@@ -265,7 +265,7 @@ class BuildHost(threading.Thread):
         queue.append('echo ========================= Performing Determining debug/release')
         queue.append('date')
 
-        config_options = ''
+        config_options = self.projectDefs.GetConfigureQualifiers()
         if self.projectDefs.GetProjectName() in self.config.configure_options:
             config_options = self.config.configure_options[self.projectDefs.GetProjectName()]
 
