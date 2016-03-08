@@ -118,6 +118,7 @@ class ProjectApache(Project):
     def __init__(self):
         self.buildDirectory = "apache/build"
         self.cloneSource = "git@github.com:Microsoft/Build-Apache-Provider.git"
+        self.configureQuals = ""
         self.subProjects = ["apache", "omi", "pal"]
         self.makeDependencies = False
         self.projectName = "apache"
@@ -129,6 +130,7 @@ class ProjectMySQL(Project):
     def __init__(self):
         self.buildDirectory = "mysql/build"
         self.cloneSource = "git@github.com:Microsoft/Build-MySQL-Provider.git"
+        self.configureQuals = ""
         self.subProjects = ["mysql", "omi", "pal"]
         self.makeDependencies = False
         self.projectName = "mysql"
@@ -140,6 +142,7 @@ class ProjectOM(Project):
     def __init__(self):
         self.buildDirectory = "opsmgr/build"
         self.cloneSource = "git@github.com:Microsoft/Build-SCXcore.git"
+        self.configureQuals = ""
         self.subProjects = ["omi", "opsmgr", "pal"]
         self.makeDependencies = False
         self.projectName = "om"
@@ -151,6 +154,7 @@ class ProjectOMI(Project):
     def __init__(self):
         self.buildDirectory = "Unix"
         self.cloneSource = "git@github.com:Microsoft/omi.git"
+        self.configureQuals = ""
         self.subProjects = [ ]
         self.makeDependencies = False
         self.projectName = "omi"
@@ -174,6 +178,7 @@ class ProjectPAL(Project):
     def __init__(self):
         self.buildDirectory = "build"
         self.cloneSource = "git@github.com:Microsoft/pal.git"
+        self.configureQuals = ""
         self.subProjects = [ ]
         self.makeDependencies = False
         self.projectName = "pal"
