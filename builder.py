@@ -251,8 +251,8 @@ class BuildHost(threading.Thread):
         queue.append('echo')
         queue.append('echo ========================= Performing git clean')
         queue.append('date')
-        queue.append('git clean -fdx')
-        queue.append('git submodule foreach git clean -fdx')
+        queue.append('git clean -fdx || exit $?')
+        queue.append('git submodule foreach git clean -fdx || exit $?')
 
         # Get ready to build
 
