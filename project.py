@@ -142,7 +142,7 @@ class ProjectOM(Project):
     def __init__(self):
         self.buildDirectory = "opsmgr/build"
         self.cloneSource = "git@github.com:Microsoft/Build-SCXcore.git"
-        self.configureQuals = ""
+        self.configureQuals = "--enable-system-build"
         self.subProjects = ["omi", "opsmgr", "pal"]
         self.makeDependencies = False
         self.projectName = "om"
