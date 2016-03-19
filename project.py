@@ -22,7 +22,7 @@ class ProjectFactory:
     # Return true if a project is valid (false otherwise)
     #
     def Validate(self):
-        if self.project in ['apache', 'mysql', 'om', 'omi', 'oms', 'pal']:
+        if self.project in ['apache', 'docker', 'mysql', 'om', 'omi', 'oms', 'pal']:
             return True
 
         return False
@@ -30,6 +30,8 @@ class ProjectFactory:
     def Create(self):
         if self.project == 'apache':
             return ProjectApache()
+        elif self.project == 'docker':
+            return ProjectDocker()
         elif self.project == 'mysql':
             return ProjectMySQL()
         elif self.project == 'om':
@@ -135,6 +137,18 @@ class ProjectMySQL(Project):
         self.makeDependencies = False
         self.projectName = "mysql"
         self.targets = "all test"
+
+class ProjectDocker(Project):
+    ##
+    # Ctor.
+    def __init__(self):
+        self.buildDirectory = "docker/build"
+        self.cloneSource = "git@github.com:Microsoft/Build-Docker-Provider.git"
+        self.configureQuals = "--enable-ulinux"
+        self.subProjects = ["docker", "omi", "pal"]
+        self.makeDependencies = False
+        self.projectName = "docker"
+        self.targets = "all"
 
 class ProjectOM(Project):
     ##
