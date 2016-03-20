@@ -22,7 +22,7 @@ class ProjectFactory:
     # Return true if a project is valid (false otherwise)
     #
     def Validate(self):
-        if self.project in ['apache', 'docker', 'mysql', 'om', 'omi', 'oms', 'pal']:
+        if self.project in ['apache', 'docker', 'dsc', 'mysql', 'om', 'omi', 'oms', 'pal']:
             return True
 
         return False
@@ -32,6 +32,8 @@ class ProjectFactory:
             return ProjectApache()
         elif self.project == 'docker':
             return ProjectDocker()
+        elif self.project == 'dsc':
+            return ProjectDsc()
         elif self.project == 'mysql':
             return ProjectMySQL()
         elif self.project == 'om':
@@ -126,18 +128,6 @@ class ProjectApache(Project):
         self.projectName = "apache"
         self.targets = "all test"
 
-class ProjectMySQL(Project):
-    ##
-    # Ctor.
-    def __init__(self):
-        self.buildDirectory = "mysql/build"
-        self.cloneSource = "git@github.com:Microsoft/Build-MySQL-Provider.git"
-        self.configureQuals = ""
-        self.subProjects = ["mysql", "omi", "pal"]
-        self.makeDependencies = False
-        self.projectName = "mysql"
-        self.targets = "all test"
-
 class ProjectDocker(Project):
     ##
     # Ctor.
@@ -149,6 +139,30 @@ class ProjectDocker(Project):
         self.makeDependencies = False
         self.projectName = "docker"
         self.targets = "all"
+
+class ProjectDsc(Project):
+    ##
+    # Ctor.
+    def __init__(self):
+        self.buildDirectory = "dsc"
+        self.cloneSource = "git@github.com:Microsoft/Build-PowerShell-DSC-for-Linux.git"
+        self.configureQuals = ""
+        self.subProjects = ["dsc", "omi", "pal"]
+        self.makeDependencies = False
+        self.projectName = "dsc"
+        self.targets = "all"
+
+class ProjectMySQL(Project):
+    ##
+    # Ctor.
+    def __init__(self):
+        self.buildDirectory = "mysql/build"
+        self.cloneSource = "git@github.com:Microsoft/Build-MySQL-Provider.git"
+        self.configureQuals = ""
+        self.subProjects = ["mysql", "omi", "pal"]
+        self.makeDependencies = False
+        self.projectName = "mysql"
+        self.targets = "all test"
 
 class ProjectOM(Project):
     ##
