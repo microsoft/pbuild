@@ -198,7 +198,7 @@ class ProjectOMS(Project):
         self.subProjects = ["dsc", "omi", "omsagent", "opsmgr", "pal"]
         self.makeDependencies = False
         self.projectName = "oms"
-        self.targets = "all"
+        self.targets = "all test"
 
 class ProjectPAL(Project):
     ##
