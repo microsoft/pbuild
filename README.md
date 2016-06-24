@@ -92,7 +92,7 @@ configuration file, pbuild will run this verification step again to
 double check that all your hosts can be reached. This can be forced
 with --initialize.
 
-[certificates everywhere]: https://github.com/MSFTOSSMgmt/ostc-docs/blob/master/setup-sshkeys.md
+[certificates everywhere]: https://github.com/Microsoft/ostc-docs/blob/master/setup-sshkeys.md
 
 2. pbuild assumes that you're using 'bash' as your shell. If important,
 it can be changed to support other shells. But to date it has no such
