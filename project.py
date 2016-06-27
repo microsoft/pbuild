@@ -22,7 +22,7 @@ class ProjectFactory:
     # Return true if a project is valid (false otherwise)
     #
     def Validate(self):
-        if self.project in ['apache', 'docker', 'dsc', 'mysql', 'om', 'omi', 'oms', 'pal']:
+        if self.project in ['apache', 'cm', 'docker', 'dsc', 'mysql', 'om', 'omi', 'oms', 'pal']:
             return True
 
         return False
@@ -30,6 +30,8 @@ class ProjectFactory:
     def Create(self):
         if self.project == 'apache':
             return ProjectApache()
+        elif self.project == 'cm':
+            return ProjectCM()
         elif self.project == 'docker':
             return ProjectDocker()
         elif self.project == 'dsc':
@@ -127,6 +129,18 @@ class ProjectApache(Project):
         self.makeDependencies = False
         self.projectName = "apache"
         self.targets = "all test"
+
+class ProjectCM(Project):
+    ##
+    # Ctor.
+    def __init__(self):
+        self.buildDirectory = "configmgr/Unix"
+        self.cloneSource = "git@github.com:Microsoft/Build-SCXcm.git"
+        self.configureQuals = ""
+        self.subProjects = ["configmgr", "omi", "pal"]
+        self.makeDependencies = True
+        self.projectName = "cm"
+        self.targets = "all release test"
 
 class ProjectDocker(Project):
     ##
