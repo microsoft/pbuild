@@ -194,13 +194,13 @@ class ProjectOMI(Project):
     ##
     # Ctor.
     def __init__(self):
-        self.buildDirectory = "Unix"
-        self.cloneSource = "git@github.com:Microsoft/omi.git"
-        self.configureQuals = ""
-        self.subProjects = [ ]
+        self.buildDirectory = "omi/Unix"
+        self.cloneSource = "git@github.com:Microsoft/Build-omi.git"
+        self.configureQuals = "--dev"
+        self.subProjects = ["omi", "pal"]
         self.makeDependencies = False
         self.projectName = "omi"
-        self.targets = "all"
+        self.targets = "all tests"
 
 class ProjectOMS(Project):
     ##
