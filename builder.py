@@ -316,6 +316,13 @@ class BuildHost(threading.Thread):
             queue.append('if [ $MAKE_STATUS -ne 0 ]; then')
             queue.append('    EXITSTATUS=$MAKE_STATUS')
             queue.append('fi')                
+            queue.append('')
+
+        if len(self.projectDefs.GetPostBuildCommands()) > 0:
+            queue.append('echo \'========================= Performing post build steps\'')
+            for command in self.projectDefs.GetPostBuildCommands():
+                queue.append('echo \'========================= Performing Executing %s ' % command + '\'')
+                queue.append(command)
 
         queue.append('echo')
         queue.append('echo Ending at:  `date`')

@@ -62,6 +62,7 @@ class Project:
         self.makeDependencies = False
         self.projectName = ""
         self.targets = []
+        self.postBuildSteps = []
 
     ##
     # Define Get() methods to fetch internal data
@@ -114,6 +115,12 @@ class Project:
     def GetTargets(self):
         return self.targets
 
+    ##
+    # Get the list of post-build commands to run
+    #
+    def GetPostBuildCommands(self):
+        return self.postBuildSteps
+
 ##
 # Project Definitions for each supported project
 #
@@ -129,6 +136,7 @@ class ProjectApache(Project):
         self.makeDependencies = False
         self.projectName = "apache"
         self.targets = "all test"
+        self.postBuildSteps = []
 
 class ProjectCM(Project):
     ##
@@ -141,6 +149,7 @@ class ProjectCM(Project):
         self.makeDependencies = True
         self.projectName = "cm"
         self.targets = "all release test"
+        self.postBuildSteps = []
 
 class ProjectDocker(Project):
     ##
@@ -153,6 +162,7 @@ class ProjectDocker(Project):
         self.makeDependencies = False
         self.projectName = "docker"
         self.targets = "all"
+        self.postBuildSteps = []
 
 class ProjectDsc(Project):
     ##
@@ -165,6 +175,7 @@ class ProjectDsc(Project):
         self.makeDependencies = False
         self.projectName = "dsc"
         self.targets = "all"
+        self.postBuildSteps = []
 
 class ProjectMySQL(Project):
     ##
@@ -177,6 +188,7 @@ class ProjectMySQL(Project):
         self.makeDependencies = False
         self.projectName = "mysql"
         self.targets = "all test"
+        self.postBuildSteps = []
 
 class ProjectOM(Project):
     ##
@@ -189,6 +201,7 @@ class ProjectOM(Project):
         self.makeDependencies = False
         self.projectName = "om"
         self.targets = "all test"
+        self.postBuildSteps = []
 
 class ProjectOMI(Project):
     ##
@@ -201,6 +214,7 @@ class ProjectOMI(Project):
         self.makeDependencies = False
         self.projectName = "omi"
         self.targets = "all tests"
+        self.postBuildSteps = [ "./regress" ]
 
 class ProjectOMS(Project):
     ##
@@ -213,6 +227,7 @@ class ProjectOMS(Project):
         self.makeDependencies = False
         self.projectName = "oms"
         self.targets = "all test"
+        self.postBuildSteps = []
 
 class ProjectPAL(Project):
     ##
@@ -225,4 +240,5 @@ class ProjectPAL(Project):
         self.makeDependencies = False
         self.projectName = "pal"
         self.targets = "all test"
+        self.postBuildSteps = []
 
