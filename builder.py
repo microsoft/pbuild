@@ -323,6 +323,8 @@ class BuildHost(threading.Thread):
             for command in self.projectDefs.GetPostBuildCommands():
                 queue.append('echo \'========================= Performing Executing %s ' % command + '\'')
                 queue.append(command)
+                queue.append('POSTSTATUS=$?')
+                queue.append('[ $POSTSTATUS != 0 ] && exit $POSTSTATUS')
 
         queue.append('echo')
         queue.append('echo Ending at:  `date`')
