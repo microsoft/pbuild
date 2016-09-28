@@ -320,11 +320,17 @@ class BuildHost(threading.Thread):
 
         if len(self.projectDefs.GetPostBuildCommands()) > 0:
             queue.append('echo \'========================= Performing post build steps\'')
+            queue.append('POSTSTATUS=0')
             for command in self.projectDefs.GetPostBuildCommands():
-                queue.append('echo \'========================= Performing Executing %s ' % command + '\'')
-                queue.append(command)
-                queue.append('POSTSTATUS=$?')
-                queue.append('[ $POSTSTATUS != 0 ] && exit $POSTSTATUS')
+                queue.append('if [ $POSTSTATUS -eq 0 ]; then')
+                queue.append('    echo \'========================= Performing Executing %s ' % command + '\'')
+
+                queue.append('    ' + command)
+                queue.append('    POSTSTATUS=$?')
+                queue.append('fi')
+            queue.append('if [ $POSTSTATUS -ne 0 ]; then')
+            queue.append('    EXITSTATUS=$POSTSTATUS')
+            queue.append('fi')
 
         queue.append('echo')
         queue.append('echo Ending at:  `date`')
