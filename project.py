@@ -213,7 +213,7 @@ class ProjectOMI(Project):
         self.subProjects = ["omi", "pal"]
         self.makeDependencies = False
         self.projectName = "omi"
-        self.targets = "all tests"
+        self.targets = "clean"  # Do 'make clean' just do something (regress is all inclusive)
         self.postBuildSteps = [ "./regress" ]
 
 class ProjectOMS(Project):
