@@ -213,7 +213,7 @@ class ProjectOMI(Project):
         self.subProjects = ["omi", "pal"]
         self.makeDependencies = False
         self.projectName = "omi"
-        self.targets = "all"
+        self.targets = "all tests"
         self.postBuildSteps = []
 
 class ProjectOMS(Project):
