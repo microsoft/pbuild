@@ -14,6 +14,7 @@ Table of Contents:
 * [Output description for Progress Setting] (#output-description-for-progress-setting)
 * [Support for testrun attributes and names] (#support-for-testrun-attributes-and-names)
 * [Keyboard Input] (#keyboard-input)
+* [Code of Conduct] (#code-of-conduct)
 
 -----
 
@@ -285,3 +286,12 @@ Character | Purpose | Description
 --------- | ------- | -----------
 `r` | Redraw Screen | Useful if an SSH error corrupts your screen (if a host is down, for example).
 `^C` | Abort | There's actually no special handling for this since none is needed. Causes pbuild to abort processing, cleaning up all remote processes and aborting the build across all systems.
+
+### Code of Conduct
+
+This project has adopted the [Microsoft Open Source Code of Conduct]
+(https://opensource.microsoft.com/codeofconduct/).  For more
+information see the [Code of Conduct FAQ]
+(https://opensource.microsoft.com/codeofconduct/faq/) or contact
+[opencode@microsoft.com](mailto:opencode@microsoft.com) with any
+additional questions or comments.
