@@ -179,7 +179,7 @@ class BuildHost(threading.Thread):
         queue.append('    date')
         queue.append('    echo \'Cloning project %s\'' % self.projectDefs.GetCloneSource())
         queue.append('    mkdir -p %s' % self.path)
-        queue.append('    rm -rf %s' % self.path)
+        queue.append('    sudo rm -rf %s' % self.path)
         queue.append('    git clone --recursive %s %s || exit $?'
                             % (self.projectDefs.GetCloneSource(), self.path))
         queue.append('    DID_WE_CLONE=1')
