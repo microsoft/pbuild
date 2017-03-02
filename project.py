@@ -22,7 +22,7 @@ class ProjectFactory:
     # Return true if a project is valid (false otherwise)
     #
     def Validate(self):
-        if self.project in ['apache', 'cm', 'docker', 'dsc', 'mysql', 'om', 'omi', 'oms', 'pal']:
+        if self.project in ['apache', 'cm', 'docker', 'dsc', 'mysql', 'om', 'omi', 'oms', 'pal', 'psrp']:
             return True
 
         return False
@@ -46,6 +46,8 @@ class ProjectFactory:
             return ProjectOMS()
         elif self.project == 'pal':
             return ProjectPAL()
+        elif self.project == 'psrp':
+            return ProjectPSRP()
         else:
             # Whoops, this project hasn't been implemented
             raise NotImplementedError
@@ -57,6 +59,7 @@ class Project:
     def __init__(self):
         self.buildDirectory = ""
         self.cloneSource = ""
+        self.usesConfigureScript = True
         self.configureQuals = ""
         self.subProjects = []
         self.makeDependencies = False
@@ -81,6 +84,12 @@ class Project:
     #
     def GetCloneSource(self):
         return self.cloneSource
+
+    ##
+    # Check if this project uses a configure script
+    #
+    def UsesConfigureScript(self):
+        return self.usesConfigureScript
 
     ##
     # Get the configure qualifiers to run the configure script with
@@ -131,6 +140,7 @@ class ProjectApache(Project):
     def __init__(self):
         self.buildDirectory = "apache/build"
         self.cloneSource = "git@github.com:Microsoft/Build-Apache-Provider.git"
+        self.usesConfigureScript = True
         self.configureQuals = ""
         self.subProjects = ["apache", "omi", "pal"]
         self.makeDependencies = False
@@ -144,6 +154,7 @@ class ProjectCM(Project):
     def __init__(self):
         self.buildDirectory = "configmgr/Unix"
         self.cloneSource = "git@github.com:Microsoft/Build-SCXcm.git"
+        self.usesConfigureScript = True
         self.configureQuals = ""
         self.subProjects = ["configmgr", "omi", "pal"]
         self.makeDependencies = True
@@ -157,6 +168,7 @@ class ProjectDocker(Project):
     def __init__(self):
         self.buildDirectory = "docker/build"
         self.cloneSource = "git@github.com:Microsoft/Build-Docker-Provider.git"
+        self.usesConfigureScript = True
         self.configureQuals = "--enable-ulinux"
         self.subProjects = ["docker", "omi", "pal"]
         self.makeDependencies = False
@@ -170,6 +182,7 @@ class ProjectDsc(Project):
     def __init__(self):
         self.buildDirectory = "dsc"
         self.cloneSource = "git@github.com:Microsoft/Build-PowerShell-DSC-for-Linux.git"
+        self.usesConfigureScript = True
         self.configureQuals = ""
         self.subProjects = ["dsc", "omi", "pal"]
         self.makeDependencies = False
@@ -183,6 +196,7 @@ class ProjectMySQL(Project):
     def __init__(self):
         self.buildDirectory = "mysql/build"
         self.cloneSource = "git@github.com:Microsoft/Build-MySQL-Provider.git"
+        self.usesConfigureScript = True
         self.configureQuals = ""
         self.subProjects = ["mysql", "omi", "pal"]
         self.makeDependencies = False
@@ -196,6 +210,7 @@ class ProjectOM(Project):
     def __init__(self):
         self.buildDirectory = "opsmgr/build"
         self.cloneSource = "git@github.com:Microsoft/Build-SCXcore.git"
+        self.usesConfigureScript = True
         self.configureQuals = "--enable-system-build"
         self.subProjects = ["omi", "opsmgr", "pal"]
         self.makeDependencies = False
@@ -209,6 +224,7 @@ class ProjectOMI(Project):
     def __init__(self):
         self.buildDirectory = "omi/Unix"
         self.cloneSource = "git@github.com:Microsoft/Build-omi.git"
+        self.usesConfigureScript = True
         self.configureQuals = "--dev"
         self.subProjects = ["omi", "pal"]
         self.makeDependencies = False
@@ -222,6 +238,7 @@ class ProjectOMS(Project):
     def __init__(self):
         self.buildDirectory = "omsagent/build"
         self.cloneSource = "git@github.com:Microsoft/Build-OMS-Agent-for-Linux.git"
+        self.usesConfigureScript = True
         self.configureQuals = "--enable-ulinux"
         self.subProjects = ["dsc", "omi", "omsagent", "opsmgr", "pal"]
         self.makeDependencies = False
@@ -235,6 +252,7 @@ class ProjectPAL(Project):
     def __init__(self):
         self.buildDirectory = "build"
         self.cloneSource = "git@github.com:Microsoft/pal.git"
+        self.usesConfigureScript = True
         self.configureQuals = ""
         self.subProjects = [ ]
         self.makeDependencies = False
@@ -242,3 +260,16 @@ class ProjectPAL(Project):
         self.targets = "all test"
         self.postBuildSteps = []
 
+class ProjectPSRP(Project):
+    ##
+    # Ctor.
+    def __init__(self):
+        self.buildDirectory = "."
+        self.cloneSource = "git@github.com:PowerShell/psl-omi-provider.git"
+        self.usesConfigureScript = False
+        self.configureQuals = ""
+        self.subProjects = ["omi", "pal"]
+        self.makeDependencies = False
+        self.projectName = "psrp"
+        self.targets = "release-ulinux"
+        self.postBuildSteps = [ ]

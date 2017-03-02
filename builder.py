@@ -261,28 +261,31 @@ class BuildHost(threading.Thread):
 
         # Now generate the remainder of the command script
 
-        queue.append('')
-        queue.append('echo')
-        queue.append('echo ========================= Performing Determining debug/release')
-        queue.append('date')
+        # If we don't support configure, then we don't support debug/release semantics
 
-        config_options = self.projectDefs.GetConfigureQualifiers()
-        if self.projectDefs.GetProjectName() in self.config.configure_options:
-            config_options = self.config.configure_options[self.projectDefs.GetProjectName()]
+        if self.projectDefs.UsesConfigureScript():
+            queue.append('')
+            queue.append('echo')
+            queue.append('echo ========================= Performing Determining debug/release')
+            queue.append('date')
 
-        if self.config.options.debug:
-            queue.append('echo "Performing DEBUG build"')
-            if config_options:
-                queue.append('echo "  (Configuration options: %s --enable-debug)"' % config_options)
-            queue.append('./configure %s --enable-debug' % config_options)
-            queue.append('EXITSTATUS=$?')
-        else:
-            queue.append('echo "Performing RELEASE build"')
-            if config_options:
-                queue.append('echo "  (Configuration options: %s)"' % config_options)
-            queue.append('./configure %s' % config_options)
-            queue.append('EXITSTATUS=$?')
-        queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
+            config_options = self.projectDefs.GetConfigureQualifiers()
+            if self.projectDefs.GetProjectName() in self.config.configure_options:
+                config_options = self.config.configure_options[self.projectDefs.GetProjectName()]
+
+            if self.config.options.debug:
+                queue.append('echo "Performing DEBUG build"')
+                if config_options:
+                    queue.append('echo "  (Configuration options: %s --enable-debug)"' % config_options)
+                queue.append('./configure %s --enable-debug' % config_options)
+                queue.append('EXITSTATUS=$?')
+            else:
+                queue.append('echo "Performing RELEASE build"')
+                if config_options:
+                    queue.append('echo "  (Configuration options: %s)"' % config_options)
+                queue.append('./configure %s' % config_options)
+                queue.append('EXITSTATUS=$?')
+            queue.append('[ $EXITSTATUS != 0 ] && exit $EXITSTATUS')
 
         if self.projectDefs.GetMakeDependencies():
             queue.append('')
