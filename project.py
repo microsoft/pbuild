@@ -22,7 +22,7 @@ class ProjectFactory:
     # Return true if a project is valid (false otherwise)
     #
     def Validate(self):
-        if self.project in ['apache', 'cm', 'docker', 'dsc', 'mysql', 'om', 'omi', 'oms', 'pal']:
+        if self.project in ['apache', 'cm', 'docker', 'dsc', 'mysql', 'om', 'omi', 'oms', 'pal', 'psrp']:
             return True
 
         return False
@@ -46,6 +46,8 @@ class ProjectFactory:
             return ProjectOMS()
         elif self.project == 'pal':
             return ProjectPAL()
+        elif self.project == 'psrp':
+            return ProjectPSRP()
         else:
             # Whoops, this project hasn't been implemented
             raise NotImplementedError
@@ -241,4 +243,18 @@ class ProjectPAL(Project):
         self.projectName = "pal"
         self.targets = "all test"
         self.postBuildSteps = []
+
+class ProjectPSRP(Project):
+    ##
+    # Ctor.
+    def __init__(self):
+        self.buildDirectory = "."
+        self.cloneSource = "git@github.com:PowerShell/psl-omi-provider.git"
+        self.configureQuals = ""
+        self.subProjects = ["omi", "pal"]
+        self.makeDependencies = False
+        self.projectName = "psrp"
+        self.targets = "release-ulinux"  # Do 'make clean' just do something (regress is all inclusive)
+        self.postBuildSteps = [ ]
+
 
