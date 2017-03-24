@@ -222,7 +222,7 @@ class BuildHost(threading.Thread):
             queue.append('date')
             queue.append('# Applying branch \'origin/%s\' to project' % self.config.options.branch)
             queue.append('git checkout origin/%s || exit $?' % self.config.options.branch)
-            queue.append('git submodule update || exit $?')
+            queue.append('git submodule update --init || exit $?')
 
         if self.config.options.subproject:
             subprojectList = self.config.options.subproject.split(',')
