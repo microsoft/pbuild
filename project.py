@@ -173,7 +173,7 @@ class ProjectDocker(Project):
         self.subProjects = ["docker", "omi", "pal"]
         self.makeDependencies = False
         self.projectName = "docker"
-        self.targets = "all"
+        self.targets = "all test"
         self.postBuildSteps = []
 
 class ProjectDsc(Project):
