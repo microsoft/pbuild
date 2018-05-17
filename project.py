@@ -22,7 +22,7 @@ class ProjectFactory:
     # Return true if a project is valid (false otherwise)
     #
     def Validate(self):
-        if self.project in ['apache', 'cm', 'docker', 'dsc', 'mysql', 'om', 'omi', 'oms', 'pal', 'psrp']:
+        if self.project in ['apache', 'cm', 'docker', 'dsc', 'mysql', 'om', 'omi', 'omikits', 'oms', 'pal', 'psrp']:
             return True
 
         return False
@@ -42,6 +42,8 @@ class ProjectFactory:
             return ProjectOM()
         elif self.project == 'omi':
             return ProjectOMI()
+        elif self.project == 'omikits':
+		    return ProjectOMIKITS()
         elif self.project == 'oms':
             return ProjectOMS()
         elif self.project == 'pal':
@@ -51,7 +53,6 @@ class ProjectFactory:
         else:
             # Whoops, this project hasn't been implemented
             raise NotImplementedError
-
 
 class Project:
     ##
@@ -129,11 +130,10 @@ class Project:
     #
     def GetPostBuildCommands(self):
         return self.postBuildSteps
-
+	
 ##
 # Project Definitions for each supported project
 #
-
 class ProjectApache(Project):
     ##
     # Ctor.
@@ -230,8 +230,22 @@ class ProjectOMI(Project):
         self.makeDependencies = False
         self.projectName = "omi"
         self.targets = "clean"  # Do 'make clean' just do something (regress is all inclusive)
-        self.postBuildSteps = [ "./regress" ]
+        self.postBuildSteps = ["./regress"]
 
+class ProjectOMIKITS(Project):
+    ##
+    # Ctor.
+    def __init__(self):
+        self.buildDirectory = "omi/Unix"
+        self.cloneSource = "git@github.com:Microsoft/Build-omi.git"
+        self.usesConfigureScript = True
+        self.configureQuals = "--enable-system-build --enable-native-kits"
+        self.subProjects = ["omi", "pal"]
+        self.makeDependencies = False
+        self.projectName = "omi"
+        self.targets = " "  # Do 'make clean' just do something (regress is all inclusive)
+        self.postBuildSteps = ["echo -n The OMI native kit is here: ; echo -n `hostname`; echo -n :; cd ./../Packages; pwd; echo;ls -R"]
+				
 class ProjectOMS(Project):
     ##
     # Ctor.
