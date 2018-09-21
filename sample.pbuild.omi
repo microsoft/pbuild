@@ -155,32 +155,22 @@ host:	suse_10_64	osd64-ub14-01		~/dev/bld-docker	docker
 # OMI Project
 #
 
-host:	aix_6.1		osd16-aix61-01		~/dev/bld-omi		omi
 host:	aix_7.1		osd16-aix71-01		~/dev/bld-omi		omi
-host:	centos_5_32	osd-ct5-01		~/dev/bld-omi		omi
-host:	centos_5_64	osd64-ct5-01		~/dev/bld-omi		omi
 host:	centos_61_64	osd64-ct61-01		~/dev/bld-omi		omi
 host:	centos_7_64	osd64-ct7-01		~/dev/bld-omi		omi
 host:	centos_7_3_64	osd64-ct73-01	~/dev/bld-omi		omi
-#host:	debian_5_32	osd-deb5-01		~/dev/bld-omi		omi
-#host:	debian_5_64	osd64-deb5-01		~/dev/bld-omi		omi
 host:	hp_v3_ia64	osdevia-hpux31-01	~/dev/bld-omi		omi
-host:	mac_10.11_2	osd-mac1012-02		~/dev/bld-omi		omi
 host:	redhat_5_32	osd-rh5-01		~/dev/bld-omi		omi
-#host:	redhat_5_64	ostcdev64-rhel5-01	~/dev/bld-omi		omi
+host:	redhat_5_64	osd64-rh5-01	~/dev/bld-omi		omi
 host:	redhat_6_32	osd-rh6-01		~/dev/bld-omi		omi
-#host:	redhat_6_64	ostcdev64-rhel6-01	~/dev/bld-omi		omi
 host:	redhat_7_64	osd64-rh7-01		~/dev/bld-omi		omi
 host:	redhat_7.1_ppc	osdppc-rh71-01		~/dev/bld-omi		omi
 host:	sun_5.10_sparc	osdevsp-sol10-01	~/dev/bld-omi		omi
 host:	sun_5.10_x86	osd86-sol10-01		~/dev/bld-omi		omi
 host:	sun_5.11_sparc	osdevsp-sol11-02	~/dev/bld-omi		omi
 host:	sun_5.11_x86	osd86-sol11-01		~/dev/bld-omi		omi
-host:	suse_10_32	osd-sls10-01		~/dev/bld-omi		omi
-host:	suse_10_64	osd64-sls10-01		~/dev/bld-omi		omi
 host:	suse_11_32	osd-sls11-01		~/dev/bld-omi		omi
 host:	suse_11_64	osd64-sls11-01		~/dev/bld-omi		omi
-#host:	suse_12_64	dev64-sles12-01		~/dev/bld-omi		omi
 host:	ubuntu_14_64	osd64-ub14-01		~/dev/bld-omi		omi
 host:	ubuntu_16_64	osd64-ub16-01		~/dev/bld-omi		omi
 host:	ubuntu_18_64	osd64-ub18-02		~/dev/bld-omi		omi
