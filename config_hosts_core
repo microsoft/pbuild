@@ -1,15 +1,21 @@
 # Operations Manager
 
-host:	aix_6.1		osdev-aix61-01		~/dev/bld-scxcore	om
-host:	aix_7.1		osdev-aix71-01		~/dev/bld-scxcore	om
-host:	hp_v3_ia64	osdevia-hpux31-01	~/dev/bld-scxcore	om
-host:	hp_v3_risc	osdevpa-hpux31-01	~/dev/bld-scxcore	om
-host:	sun_5.10_sparc	osdevsp-sol10-01	~/dev/bld-scxcore	om
-host:	sun_5.10_x86	osdev86-sol10-01	~/dev/bld-scxcore	om
-host:	sun_5.11_sparc	osdevsp-sol11-01	~/dev/bld-scxcore	om
-host:	sun_5.11_x86	osdev86-sol11-01	~/dev/bld-scxcore	om
-host:	suse_10_32	osdev-sles10-01		~/dev/bld-scxcore	om
-host:	suse_10_64	osdev64-sles10-01	~/dev/bld-scxcore	om
+host:	aix_7.1				osd16-aix71-01		~/dev/bld-scxcore	om
+host:	aix_7.1				osd16-aix71-02		~/dev/bld-scxcore	om
+host:	aix_7.1				osd-aix71-02		~/dev/bld-scxcore	om
+host:	aix_7.1				osd-aix71-03		~/dev/bld-scxcore	om
+host:	aix_7.2				osdev-aix72-01		~/dev/bld-scxcore	om
+host:	hp_v3_ia64			osdevia-hpux31-01	~/dev/bld-scxcore	om
+host:	hp_v3_ia64			osdevia-hpux31-02	~/dev/bld-scxcore	om
+host:	sun_5.10_sparc		osdevsp-sol10-01	~/dev/bld-scxcore	om
+host:	sun_5.11_sparc		osdevsp-sol11-01	~/dev/bld-scxcore	om
+host:	sun_5.11_sparc		osdevsp-sol11-02	~/dev/bld-scxcore	om
+host:	cent_5_32			osd-ct5-01			~/dev/bld-scxcore	om
+host:	cent_5_32			osd-ct5-02			~/dev/bld-scxcore	om
+host:	redhat_5_x64		osd64-rh5-02		~/dev/bld-scxcore	om
+host:	redhat_7_x64_ppc	osd64-rh7-01		~/dev/bld-scxcore	om
+host:	redhat_7_x64_ppc	osdppc-rh71-01		~/dev/bld-scxcore	om
+host:	redhat_7_x64_ppc	osdppc-rh73-01		~/dev/bld-scxcore	om
 
 #
 # Apache Project
@@ -30,16 +36,46 @@ host:	suse_10_64	osdev64-sles10-01	~/dev/bld-mysql		mysql
 #
 
 host:	cent_5_32	osdev-cent5-01		~/dev/bld-omsagent	oms
-host:	cent_5_64	osdev64-cent5-01	~/dev/bld-omsagent      oms
+host:	cent_5_64	osdev64-cent5-01	~/dev/bld-omsagent	oms
 
 #
 # OMI Project
 #
 
-host:	centos_7_64_p	jeffcof64-cent7x-01	~/dev/omi		omi
+host:	aix_7.1				osd16-aix71-01		~/dev/omi		omi
+host:	aix_7.1				osd16-aix71-02		~/dev/omi		omi
+host:	aix_7.1				osd-aix71-02		~/dev/omi		omi
+host:	aix_7.1				osd-aix71-03		~/dev/omi		omi
+host:	aix_7.2				osdev-aix72-01		~/dev/omi		omi
+host:	hp_v3_ia64			osdevia-hpux31-01	~/dev/omi		omi
+host:	hp_v3_ia64			osdevia-hpux31-02	~/dev/omi		omi
+host:	sun_5.10_sparc		osdevsp-sol10-01	~/dev/omi		omi
+host:	sun_5.11_sparc		osdevsp-sol11-01	~/dev/omi		omi
+host:	sun_5.11_sparc		osdevsp-sol11-02	~/dev/omi		omi
+host:	cent_5_32			osd-ct5-01			~/dev/omi		omi
+host:	cent_5_32			osd-ct5-02			~/dev/omi		omi
+host:	redhat_5_x64		osd64-rh5-02		~/dev/omi		omi
+host:	redhat_7_x64_ppc	osd64-rh7-01		~/dev/omi		omi
+host:	redhat_7_x64_ppc	osdppc-rh71-01		~/dev/omi		omi
+host:	redhat_7_x64_ppc	osdppc-rh73-01		~/dev/omi		omi
 
 #
 # PAL Project
 #
 
-host:	centos_7_64_p	jeffcof64-cent7x-01	~/dev/pal		pal
+host:	aix_7.1				osd16-aix71-01		~/dev/pal		pal
+host:	aix_7.1				osd16-aix71-02		~/dev/pal		pal
+host:	aix_7.1				osd-aix71-02		~/dev/pal		pal
+host:	aix_7.1				osd-aix71-03		~/dev/pal		pal
+host:	aix_7.2				osdev-aix72-01		~/dev/pal		pal
+host:	hp_v3_ia64			osdevia-hpux31-01	~/dev/pal		pal
+host:	hp_v3_ia64			osdevia-hpux31-02	~/dev/pal		pal
+host:	sun_5.10_sparc		osdevsp-sol10-01	~/dev/pal		pal
+host:	sun_5.11_sparc		osdevsp-sol11-01	~/dev/pal		pal
+host:	sun_5.11_sparc		osdevsp-sol11-02	~/dev/pal		pal
+host:	cent_5_32			osd-ct5-01			~/dev/pal		pal
+host:	cent_5_32			osd-ct5-02			~/dev/pal		pal
+host:	redhat_5_x64		osd64-rh5-02		~/dev/pal		pal
+host:	redhat_7_x64_ppc	osd64-rh7-01		~/dev/pal		pal
+host:	redhat_7_x64_ppc	osdppc-rh71-01		~/dev/pal		pal
+host:	redhat_7_x64_ppc	osdppc-rh73-01		~/dev/pal		pal
