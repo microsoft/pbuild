@@ -1,21 +1,15 @@
 # Operations Manager
 
 host:	aix_7.1			osd16-aix71-01		~/dev/bld-scxcore	om
-host:	aix_7.1			osd16-aix71-02		~/dev/bld-scxcore	om
-host:	aix_7.1			osd-aix71-02		~/dev/bld-scxcore	om
-host:	aix_7.1			osd-aix71-03		~/dev/bld-scxcore	om
 host:	aix_7.2			osdev-aix72-01		~/dev/bld-scxcore	om
-host:	hp_v3_ia64		osdevia-hpux31-01	~/dev/bld-scxcore	om
-host:	hp_v3_ia64		osdevia-hpux31-02	~/dev/bld-scxcore	om
 host:	sun_5.10_sparc		osdevsp-sol10-01	~/dev/bld-scxcore	om
-host:	sun_5.11_sparc		osdevsp-sol11-01	~/dev/bld-scxcore	om
 host:	sun_5.11_sparc		osdevsp-sol11-02	~/dev/bld-scxcore	om
 host:	cent_5_32		osd-ct5-01		~/dev/bld-scxcore	om
-host:	cent_5_32		osd-ct5-02		~/dev/bld-scxcore	om
 host:	redhat_5_x64		osd64-rh5-02		~/dev/bld-scxcore	om
-host:	redhat_7_x64_ppc	osd64-rh7-01		~/dev/bld-scxcore	om
+host:	redhat_7_x64		osd64-rh7-01		~/dev/bld-scxcore	om
 host:	redhat_7_x64_ppc	osdppc-rh71-01		~/dev/bld-scxcore	om
-host:	redhat_7_x64_ppc	osdppc-rh73-01		~/dev/bld-scxcore	om
+host:	suse_114_x64		osd64-sls114-02		~/dev/bld-scxcore	om
+host:	suse_12_ppc		osdppc-sls12-01		~/dev/bld-scxcore	om
 
 #
 # Apache Project
@@ -43,39 +37,27 @@ host:	cent_5_64	osdev64-cent5-01	~/dev/bld-omsagent	oms
 #
 
 host:	aix_7.1			osd16-aix71-01		~/dev/omi		omi
-host:	aix_7.1			osd16-aix71-02		~/dev/omi		omi
-host:	aix_7.1			osd-aix71-02		~/dev/omi		omi
-host:	aix_7.1			osd-aix71-03		~/dev/omi		omi
 host:	aix_7.2			osdev-aix72-01		~/dev/omi		omi
-host:	hp_v3_ia64		osdevia-hpux31-01	~/dev/omi		omi
-host:	hp_v3_ia64		osdevia-hpux31-02	~/dev/omi		omi
 host:	sun_5.10_sparc		osdevsp-sol10-01	~/dev/omi		omi
-host:	sun_5.11_sparc		osdevsp-sol11-01	~/dev/omi		omi
 host:	sun_5.11_sparc		osdevsp-sol11-02	~/dev/omi		omi
 host:	cent_5_32		osd-ct5-01		~/dev/omi		omi
-host:	cent_5_32		osd-ct5-02		~/dev/omi		omi
 host:	redhat_5_x64		osd64-rh5-02		~/dev/omi		omi
-host:	redhat_7_x64_ppc	osd64-rh7-01		~/dev/omi		omi
+host:	redhat_7_x64		osd64-rh7-01		~/dev/omi		omi
 host:	redhat_7_x64_ppc	osdppc-rh71-01		~/dev/omi		omi
-host:	redhat_7_x64_ppc	osdppc-rh73-01		~/dev/omi		omi
+host:	suse_114_x64		osd64-sls114-02		~/dev/omi		omi
+host:	suse_12_ppc		osdppc-sls12-01		~/dev/omi		omi
 
 #
 # PAL Project
 #
 
 host:	aix_7.1			osd16-aix71-01		~/dev/pal		pal
-host:	aix_7.1			osd16-aix71-02		~/dev/pal		pal
-host:	aix_7.1			osd-aix71-02		~/dev/pal		pal
-host:	aix_7.1			osd-aix71-03		~/dev/pal		pal
 host:	aix_7.2			osdev-aix72-01		~/dev/pal		pal
-host:	hp_v3_ia64		osdevia-hpux31-01	~/dev/pal		pal
-host:	hp_v3_ia64		osdevia-hpux31-02	~/dev/pal		pal
 host:	sun_5.10_sparc		osdevsp-sol10-01	~/dev/pal		pal
-host:	sun_5.11_sparc		osdevsp-sol11-01	~/dev/pal		pal
 host:	sun_5.11_sparc		osdevsp-sol11-02	~/dev/pal		pal
 host:	cent_5_32		osd-ct5-01		~/dev/pal		pal
-host:	cent_5_32		osd-ct5-02		~/dev/pal		pal
 host:	redhat_5_x64		osd64-rh5-02		~/dev/pal		pal
-host:	redhat_7_x64_ppc	osd64-rh7-01		~/dev/pal		pal
+host:	redhat_7_x64		osd64-rh7-01		~/dev/pal		pal
 host:	redhat_7_x64_ppc	osdppc-rh71-01		~/dev/pal		pal
-host:	redhat_7_x64_ppc	osdppc-rh73-01		~/dev/pal		pal
+host:	suse_114_x64		osd64-sls114-02		~/dev/pal		pal
+host:	suse_12_ppc		osdppc-sls12-01		~/dev/pal		pal
